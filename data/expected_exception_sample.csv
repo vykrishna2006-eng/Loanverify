@@ -1,0 +1,9 @@
+loan_id,rule_id,exception_type,severity,field,actual,expected,message
+L000010,R006,BALANCE_GREATER_THAN_PRINCIPAL,HIGH,current_balance,937500.00,<= 750000.00,Balance exceeds original principal
+L000020,R004,INVALID_PRINCIPAL,HIGH,original_principal,-150000.00,> 0,Negative principal balance
+L000030,R008,INVALID_PAYMENT_STATUS,MEDIUM,payment_status,PENDING,CURRENT|DELINQUENT|DEFAULT|PAID_OFF|CLOSED,Unrecognised payment status
+L000040,R014,STATUS_DPD_CONFLICT,HIGH,days_past_due,"CURRENT, DPD=45",CURRENT requires DPD=0,Status CURRENT but 45 days past due
+L000050,R013,CLOSED_WITH_POSITIVE_BALANCE,HIGH,current_balance,15000.00,0 (loan is CLOSED),Closed loan has positive balance
+L000060,R011,STALE_RECORD,LOW,last_payment_date,2023-12-01,>= 180 days ago threshold,Record not updated in over 180 days
+L000070,R001,MISSING_REQUIRED_FIELDS,HIGH,loan_id,NULL,NOT NULL,Missing loan_id
+L000080,R012,INVALID_STATE,MEDIUM,borrower_state,XX,Valid 2-letter US state,Invalid state code XX

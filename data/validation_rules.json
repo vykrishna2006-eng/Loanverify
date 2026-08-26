@@ -1,0 +1,137 @@
+[
+  {
+    "rule_id": "R001",
+    "name": "Required Fields",
+    "description": "loan_id, original_principal, origination_date must be present",
+    "category": "REQUIRED_FIELD",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "loan_id IS NOT NULL AND original_principal IS NOT NULL AND origination_date IS NOT NULL"
+  },
+  {
+    "rule_id": "R002",
+    "name": "Valid Origination Date",
+    "description": "Origination date must be a valid past date",
+    "category": "DATE",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "origination_date <= TODAY()"
+  },
+  {
+    "rule_id": "R003",
+    "name": "Valid Maturity Date",
+    "description": "Maturity date must be after origination date",
+    "category": "DATE",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "maturity_date > origination_date"
+  },
+  {
+    "rule_id": "R004",
+    "name": "No Negative Principal",
+    "description": "Original principal must be greater than zero",
+    "category": "FINANCIAL",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "original_principal > 0"
+  },
+  {
+    "rule_id": "R005",
+    "name": "Valid Interest Rate",
+    "description": "Interest rate must be between 0.5 and 50 percent",
+    "category": "FINANCIAL",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "0.5 <= interest_rate <= 50"
+  },
+  {
+    "rule_id": "R006",
+    "name": "Balance Does Not Exceed Principal",
+    "description": "Current balance must not exceed original principal",
+    "category": "FINANCIAL",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "current_balance <= original_principal"
+  },
+  {
+    "rule_id": "R007",
+    "name": "No Invalid Balance",
+    "description": "Current balance must be >= 0",
+    "category": "FINANCIAL",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "current_balance >= 0"
+  },
+  {
+    "rule_id": "R008",
+    "name": "Valid Payment Status",
+    "description": "Payment status must be a recognized value",
+    "category": "STATUS",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "rule_expression": "payment_status IN (CURRENT,DELINQUENT,DEFAULT,PAID_OFF,CLOSED,FORECLOSURE)"
+  },
+  {
+    "rule_id": "R009",
+    "name": "Duplicate Loan Detection",
+    "description": "Loan ID must be unique within the upload",
+    "category": "DUPLICATE",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "COUNT(loan_id) = 1"
+  },
+  {
+    "rule_id": "R010",
+    "name": "Document Status Present",
+    "description": "Document status must not be missing",
+    "category": "DOCUMENT",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "rule_expression": "document_status IS NOT NULL"
+  },
+  {
+    "rule_id": "R011",
+    "name": "Stale Record Detection",
+    "description": "Records not updated in over 180 days",
+    "category": "DATE",
+    "severity": "LOW",
+    "is_active": true,
+    "rule_expression": "last_payment_date >= TODAY() - 180"
+  },
+  {
+    "rule_id": "R012",
+    "name": "Valid US State",
+    "description": "Property state must be a valid 2-letter US state code",
+    "category": "GEOGRAPHIC",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "rule_expression": "borrower_state IN (valid_states)"
+  },
+  {
+    "rule_id": "R013",
+    "name": "Closed Account Positive Balance",
+    "description": "Closed loans must have zero balance",
+    "category": "STATUS",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "NOT (payment_status=CLOSED AND current_balance > 0)"
+  },
+  {
+    "rule_id": "R014",
+    "name": "Payment Status vs DPD Conflict",
+    "description": "CURRENT status loans must have 0 days past due",
+    "category": "STATUS",
+    "severity": "HIGH",
+    "is_active": true,
+    "rule_expression": "NOT (payment_status=CURRENT AND days_past_due > 0)"
+  },
+  {
+    "rule_id": "R015",
+    "name": "Suspicious Borrower Repetition",
+    "description": "Same borrower on more than 5 loans in same upload",
+    "category": "DUPLICATE",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "rule_expression": "COUNT(borrower_id) <= 5"
+  }
+]

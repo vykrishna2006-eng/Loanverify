@@ -1,0 +1,23 @@
+[
+  {
+    "id": "a0000001-0000-0000-0000-000000000001",
+    "email": "operator@loanverify.ai",
+    "full_name": "Alex Operator",
+    "role": "DATA_OPERATOR",
+    "password": "password123"
+  },
+  {
+    "id": "a0000002-0000-0000-0000-000000000002",
+    "email": "reviewer@loanverify.ai",
+    "full_name": "Riley Reviewer",
+    "role": "REVIEWER",
+    "password": "password123"
+  },
+  {
+    "id": "a0000003-0000-0000-0000-000000000003",
+    "email": "consumer@loanverify.ai",
+    "full_name": "Casey Consumer",
+    "role": "DATA_CONSUMER",
+    "password": "password123"
+  }
+]
