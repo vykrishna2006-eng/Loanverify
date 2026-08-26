@@ -45,11 +45,15 @@ export default function Login() {
   };
 
   const quickLogin = async (cred) => {
+    setErr('');
     setEmail(cred.email);
     setPassword(cred.password);
     const result = await login(cred.email, cred.password);
     if (result.ok) navigate('/dashboard');
-    else toast.error(result.error);
+    else {
+      setErr(result.error);
+      toast.error(result.error);
+    }
   };
 
   return (
