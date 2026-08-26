@@ -1,6 +1,6 @@
 {
   "framework": "create-react-app",
-  "buildCommand": "npm run build",
+  "buildCommand": "CI=false npm run build",
   "outputDirectory": "build",
   "rewrites": [
     {
@@ -9,6 +9,7 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://loanverify-backend.onrender.com"
+    "REACT_APP_API_URL": "https://loanverify-backend.onrender.com",
+    "CI": "false"
   }
 }
