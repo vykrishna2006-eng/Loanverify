@@ -19,7 +19,7 @@ const NAV = [
 ];
 
 export default function Sidebar() {
-  const { user, logout, roleName } = useAuth();
+  const { user, logout, roleName, switchRole } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -50,23 +50,48 @@ export default function Sidebar() {
         })}
 
         <div className="nav-section-label" style={{ marginTop: 8 }}>System</div>
-        <div className="nav-item" onClick={() => window.open('http://localhost:8000/api/docs', '_blank')}>
+        <div className="nav-item" onClick={() => window.open('https://loanverify-backend.onrender.com/api/docs', '_blank')}>
           <Settings />
           <span>API Docs</span>
         </div>
       </nav>
 
       <div className="sidebar-footer">
-        <div className="user-chip">
-          <div className="user-avatar">
-            {user?.full_name?.[0] || 'U'}
+        <div className="user-chip" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="user-avatar">
+              {user?.full_name?.[0] || 'U'}
+            </div>
+            <div className="user-info" style={{ overflow: 'hidden' }}>
+              <div className="user-name" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user?.full_name}</div>
+            </div>
           </div>
-          <div className="user-info">
-            <div className="user-name">{user?.full_name}</div>
-            <div className="user-role">{roleName?.replace('_', ' ')}</div>
+          
+          {/* Interactive Role Switcher */}
+          <div style={{ marginTop: 2 }}>
+            <select
+              value={roleName || 'DATA_OPERATOR'}
+              onChange={(e) => switchRole(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#60a5fa',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: 6,
+                padding: '4px 6px',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              <option value="DATA_OPERATOR" style={{ background: '#0f172a', color: '#fff' }}>Role: Data Operator</option>
+              <option value="REVIEWER" style={{ background: '#0f172a', color: '#fff' }}>Role: Reviewer</option>
+              <option value="DATA_CONSUMER" style={{ background: '#0f172a', color: '#fff' }}>Role: Data Consumer</option>
+            </select>
           </div>
         </div>
-        <button className="btn-logout" onClick={logout}>
+        <button className="btn-logout" onClick={logout} style={{ marginTop: 6 }}>
           <LogOut size={12} style={{ display: 'inline', marginRight: 4 }} />
           Sign out
         </button>

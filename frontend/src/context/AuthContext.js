@@ -51,16 +51,27 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const switchRole = (newRole) => {
+    if (!user) return;
+    const updatedUser = {
+      ...user,
+      role: { ...(user.role || {}), name: newRole },
+      role_name: newRole,
+    };
+    localStorage.setItem('lv_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const logout = () => {
     localStorage.removeItem('lv_token');
     localStorage.removeItem('lv_user');
     setUser(null);
   };
 
-  const roleName = user?.role?.name || '';
+  const roleName = user?.role?.name || user?.role_name || '';
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, roleName }}>
+    <AuthContext.Provider value={{ user, login, register, switchRole, logout, loading, roleName }}>
       {children}
     </AuthContext.Provider>
   );
