@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { rulesAPI } from '../api/client';
 import { SeverityBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
-import { ShieldCheck, Power } from 'lucide-react';
+import { Power } from 'lucide-react';
 
 export default function Rules() {
   const [rules, setRules] = useState([]);

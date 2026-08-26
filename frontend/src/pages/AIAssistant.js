@@ -4,7 +4,7 @@ import { aiAPI, rulesAPI } from '../api/client';
 import toast from 'react-hot-toast';
 import {
   Bot, Scale, FileText, List, Lightbulb,
-  CheckCircle, XCircle, Wrench, ShieldCheck,
+  CheckCircle, Wrench, ShieldCheck,
 } from 'lucide-react';
 
 // ── Shared collapsible card ────────────────────────────────────────────────
