@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const getApiBase = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://loanverify-backend.onrender.com';
+  }
+  return 'http://localhost:8000';
+};
+
+const API_BASE = getApiBase();
 
 const client = axios.create({
   baseURL: `${API_BASE}/api`,
@@ -38,7 +48,15 @@ export const authAPI = {
     });
   },
   me: () => client.get('/auth/me'),
-  register: (data) => client.post('/auth/register', data),
+  register: (data) =>
+    client.post('/auth/register', data, {
+      params: {
+        email: data.email,
+        full_name: data.full_name,
+        password: data.password,
+        role_name: data.role_name,
+      },
+    }),
 };
 
 // ── Uploads ───────────────────────────────────────────

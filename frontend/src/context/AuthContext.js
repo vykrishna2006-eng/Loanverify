@@ -19,7 +19,11 @@ export function AuthProvider({ children }) {
       setUser(u);
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: err.response?.data?.detail || 'Login failed' };
+      const errorMsg =
+        err.response?.data?.detail ||
+        (typeof err.response?.data === 'string' ? err.response?.data : null) ||
+        (err.response?.status === 404 ? 'Backend server not reachable. Please verify backend URL.' : 'Login failed');
+      return { ok: false, error: errorMsg };
     } finally {
       setLoading(false);
     }
@@ -37,7 +41,11 @@ export function AuthProvider({ children }) {
       // After registration, automatically log in
       return await login(email, password);
     } catch (err) {
-      return { ok: false, error: err.response?.data?.detail || 'Registration failed' };
+      const errorMsg =
+        err.response?.data?.detail ||
+        (typeof err.response?.data === 'string' ? err.response?.data : null) ||
+        (err.response?.status === 404 ? 'Backend server not reachable. Please verify backend URL.' : 'Registration failed');
+      return { ok: false, error: errorMsg };
     } finally {
       setLoading(false);
     }
