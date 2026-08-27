@@ -11,7 +11,7 @@ class ReviewDecision(Base):
     id                   = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     exception_id         = Column(String(36), ForeignKey("exceptions.id", ondelete="CASCADE"), nullable=False)
     ai_recommendation_id = Column(String(36), ForeignKey("ai_recommendations.id"))
-    reviewer_id          = Column(String(36), ForeignKey("users.id"), nullable=False)
+    reviewer_id          = Column(String(36), nullable=False)
     decision             = Column(String(50), nullable=False)
     ai_decision_followed = Column(Boolean)
     original_value       = Column(Text)

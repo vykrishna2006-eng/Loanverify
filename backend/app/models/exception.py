@@ -20,7 +20,7 @@ class Exception(Base):
     expected_value = Column(Text)
     message        = Column(Text, nullable=False)
     status         = Column(String(50), default="OPEN", index=True)
-    assigned_to    = Column(String(36), ForeignKey("users.id"))
+    assigned_to    = Column(String(36), )
     created_at     = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at     = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at    = Column(DateTime(timezone=True))
@@ -43,7 +43,7 @@ class ExceptionComment(Base):
 
     id           = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     exception_id = Column(String(36), ForeignKey("exceptions.id", ondelete="CASCADE"), nullable=False)
-    author_id    = Column(String(36), ForeignKey("users.id"), nullable=False)
+    author_id    = Column(String(36), nullable=False)
     comment      = Column(Text, nullable=False)
     created_at   = Column(DateTime(timezone=True), default=datetime.utcnow)
 

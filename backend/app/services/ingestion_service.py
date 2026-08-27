@@ -8,6 +8,20 @@ import hashlib
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional, Tuple
 from decimal import Decimal, InvalidOperation
+import math
+
+def sanitize_json_val(val: Any) -> Any:
+    """Recursively clean floats and structures so NaN/Inf become None for PostgreSQL JSON validity."""
+    if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+        return None
+    if isinstance(val, dict):
+        return {k: sanitize_json_val(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [sanitize_json_val(v) for v in val]
+    if pd.isna(val):
+        return None
+    return val
+
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -194,7 +208,7 @@ def map_row_to_loan(row: pd.Series, raw: Dict, source_row: int, upload_id) -> Di
         "employment_length": str(row.get("employment_length", "")).strip() or None if row.get("employment_length") else None,
         "income_band": str(row.get("income_band", "")).strip() or None if row.get("income_band") else None,
         "source_system": str(row.get("source_system", "")).strip() or None if row.get("source_system") else None,
-        "raw_data": raw,
+        "raw_data": sanitize_json_val(raw),
         "parse_errors": parse_errors or None,
         "is_duplicate": False,
     }
@@ -278,7 +292,7 @@ def ingest_csv(
             failed_rows.append({
                 "row": row_num,
                 "error": "Missing loan_id",
-                "data": row_dict,
+                "data": sanitize_json_val(row_dict),
             })
             continue
 
@@ -300,7 +314,7 @@ def ingest_csv(
     # ── Update upload summary ──────────────────────────────────────────────
     upload.imported_rows = len(records_to_insert)
     upload.failed_rows = len(failed_rows)
-    upload.error_summary = {"failed_rows": failed_rows[:50]} if failed_rows else None
+    upload.error_summary = sanitize_json_val({"failed_rows": failed_rows[:50]}) if failed_rows else None
     upload.status = "COMPLETED"
     upload.completed_at = datetime.utcnow()
     db.flush()

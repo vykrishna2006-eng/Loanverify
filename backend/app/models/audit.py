@@ -10,7 +10,7 @@ class AuditEvent(Base):
 
     id           = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     event_type   = Column(String(100), nullable=False, index=True)
-    actor_id     = Column(String(36), ForeignKey("users.id"))
+    actor_id     = Column(String(36), )
     actor_email  = Column(String(255))
     loan_id      = Column(String(100), index=True)
     upload_id    = Column(String(36), ForeignKey("uploads.id"))

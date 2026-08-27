@@ -18,7 +18,7 @@ class ValidationRule(Base):
     rule_expression = Column(String)
     rule_fn_name    = Column(String(100))
     created_at      = Column(DateTime(timezone=True), default=datetime.utcnow)
-    created_by      = Column(String(36), ForeignKey("users.id"))
+    created_by      = Column(String(36), )
     source          = Column(String(50), default="SYSTEM")
 
 

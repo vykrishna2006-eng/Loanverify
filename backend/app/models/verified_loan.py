@@ -28,7 +28,7 @@ class VerifiedLoan(Base):
     reviewer_decision_ids  = Column(JSON, default=list)   # [str(uuid), ...]
 
     # Module E: verification stamp
-    verified_by      = Column(String(36), ForeignKey("users.id"), nullable=False)
+    verified_by      = Column(String(36), nullable=False)
     verified_at      = Column(DateTime(timezone=True), default=datetime.utcnow)
     record_hash      = Column(String(64), nullable=False)
     hash_algorithm   = Column(String(20), default="SHA-256")

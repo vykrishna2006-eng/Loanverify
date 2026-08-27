@@ -11,6 +11,6 @@ class Export(Base):
     export_type  = Column(String(50), nullable=False)
     file_path    = Column(String)
     record_count = Column(Integer)
-    exported_by  = Column(String(36), ForeignKey("users.id"))
+    exported_by  = Column(String(36), )
     filters_used = Column(JSON)
     created_at   = Column(DateTime(timezone=True), default=datetime.utcnow)

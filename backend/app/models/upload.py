@@ -19,7 +19,7 @@ class Upload(Base):
     failed_rows       = Column(Integer, default=0)
     status            = Column(String(50), default="PROCESSING")
     error_summary     = Column(JSON)
-    uploaded_by       = Column(String(36), ForeignKey("users.id"))
+    uploaded_by       = Column(String(36), )
     created_at        = Column(DateTime(timezone=True), default=datetime.utcnow)
     completed_at      = Column(DateTime(timezone=True))
     loan_records     = relationship("LoanRecord", back_populates="upload", cascade="all, delete-orphan")
