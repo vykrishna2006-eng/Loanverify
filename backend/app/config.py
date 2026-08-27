@@ -29,9 +29,9 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.CORS_ORIGINS.split(",")]
 
     # AI
-    AI_PROVIDER: str = "mock"   # mock | gemini
+    AI_PROVIDER: str = "gemini"   # mock | gemini
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
 
     # Upload
     UPLOAD_DIR: str = "./uploads"

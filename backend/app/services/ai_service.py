@@ -15,7 +15,7 @@ from app.config import settings
 # ─── Provider abstraction ─────────────────────────────────────────────────────
 
 def _call_gemini(prompt: str, system: str = "", response_mime_type: Optional[str] = None) -> Dict[str, Any]:
-    """Call Gemini API and return {content, model, prompt_tokens, completion_tokens, latency_ms}."""
+    """Call Gemini API with automatic model fallback and return {content, model, prompt_tokens, completion_tokens, latency_ms}."""
     try:
         from google import genai
         from google.genai import types
@@ -30,26 +30,40 @@ def _call_gemini(prompt: str, system: str = "", response_mime_type: Optional[str
             response_mime_type=response_mime_type,
         )
         
-        resp = client.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=prompt,
-            config=config,
-        )
-        latency = int((time.time() - t0) * 1000)
+        # Candidate model names to try in order
+        candidate_models = [settings.GEMINI_MODEL, "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+        # deduplicate while preserving order
+        candidate_models = list(dict.fromkeys(candidate_models))
         
-        prompt_tokens = 0
-        completion_tokens = 0
-        if resp.usage_metadata:
-            prompt_tokens = resp.usage_metadata.prompt_token_count
-            completion_tokens = resp.usage_metadata.candidates_token_count
-            
-        return {
-            "content": resp.text,
-            "model": settings.GEMINI_MODEL,
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "latency_ms": latency,
-        }
+        last_err = None
+        for model_name in candidate_models:
+            try:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=config,
+                )
+                latency = int((time.time() - t0) * 1000)
+                
+                prompt_tokens = 0
+                completion_tokens = 0
+                if resp.usage_metadata:
+                    prompt_tokens = resp.usage_metadata.prompt_token_count
+                    completion_tokens = resp.usage_metadata.candidates_token_count
+                    
+                return {
+                    "content": resp.text,
+                    "model": model_name,
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "latency_ms": latency,
+                }
+            except Exception as model_err:
+                last_err = model_err
+                continue
+                
+        return {"content": f"Gemini error: {last_err}", "model": settings.GEMINI_MODEL,
+                "prompt_tokens": 0, "completion_tokens": 0, "latency_ms": 0}
     except Exception as e:
         return {"content": f"Gemini error: {e}", "model": settings.GEMINI_MODEL,
                 "prompt_tokens": 0, "completion_tokens": 0, "latency_ms": 0}
