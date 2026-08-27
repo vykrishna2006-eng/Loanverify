@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import Layout from '../components/Layout';
 import { uploadsAPI } from '../api/client';
@@ -209,6 +210,7 @@ function UploadZone({ onUploadComplete }) {
 
 // ─── Import History ───────────────────────────────────────────────────────────
 export default function Uploads() {
+  const navigate = useNavigate();
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage]       = useState(1);
@@ -246,7 +248,7 @@ export default function Uploads() {
               <table>
                 <thead>
                   <tr>
-                    <th>File</th><th>Source</th><th>Total</th><th>Imported</th><th>Failed</th><th>Status</th><th>Uploaded</th>
+                    <th>File</th><th>Source</th><th>Total</th><th>Imported</th><th>Failed</th><th>Status</th><th>Uploaded</th><th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -255,7 +257,7 @@ export default function Uploads() {
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <FileText size={14} color="var(--text-muted)" />
-                          <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', fontSize: 12 }}>
+                          <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', fontSize: 12, fontWeight: 600 }}>
                             {u.original_filename}
                           </span>
                         </div>
@@ -269,6 +271,26 @@ export default function Uploads() {
                       <td><StatusBadge status={u.status} /></td>
                       <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {u.created_at ? new Date(u.created_at).toLocaleString() : '—'}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: 11, padding: '3px 8px' }}
+                            onClick={() => navigate(`/exceptions?upload_id=${u.id}`)}
+                            title="View exceptions isolated for this file"
+                          >
+                            ⚠️ Exceptions
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ fontSize: 11, padding: '3px 8px' }}
+                            onClick={() => navigate(`/loans?upload_id=${u.id}`)}
+                            title="View loan records for this file"
+                          >
+                            📁 Loans
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

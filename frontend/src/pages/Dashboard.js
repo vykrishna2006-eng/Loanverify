@@ -50,8 +50,13 @@ function OperatorDashboard({ data, navigate }) {
               <thead><tr><th>File</th><th>Type</th><th>Rows</th><th>Imported</th><th>Failed</th><th>Status</th></tr></thead>
               <tbody>
                 {(data.recent_uploads || []).map(u => (
-                  <tr key={u.id} style={{ cursor: 'pointer' }} onClick={() => navigate('/uploads')}>
-                    <td style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12 }}>
+                  <tr
+                    key={u.id}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(`/exceptions?upload_id=${u.id}`)}
+                    title="Click to view exceptions for this specific file"
+                  >
+                    <td style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, fontWeight: 500, color: 'var(--accent)' }}>
                       {u.filename}
                     </td>
                     <td><span className="badge badge-blue" style={{ fontSize: 10 }}>{u.source_type?.replace('_',' ')}</span></td>

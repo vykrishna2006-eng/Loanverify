@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { exceptionsAPI } from '../api/client';
+import { exceptionsAPI, uploadsAPI } from '../api/client';
 import { SeverityBadge, StatusBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
 import {
@@ -329,10 +329,11 @@ function ExceptionDetail({ id, onClose }) {
 export default function Exceptions() {
   const location = useLocation();
 
-  // Read severity pre-filter from URL query params (e.g. /exceptions?severity=HIGH)
-  const urlParams  = new URLSearchParams(location.search);
-  const urlSeverity = urlParams.get('severity') || '';
-  const urlStatus   = urlParams.get('status')   || '';
+  // Read pre-filters from URL query params (e.g. /exceptions?severity=HIGH or /exceptions?upload_id=xxx)
+  const urlParams   = new URLSearchParams(location.search);
+  const urlSeverity = urlParams.get('severity')  || '';
+  const urlStatus   = urlParams.get('status')    || '';
+  const urlUploadId = urlParams.get('upload_id') || '';
 
   const [exceptions, setExceptions] = useState([]);
   const [summary, setSummary]       = useState({});
@@ -346,13 +347,16 @@ export default function Exceptions() {
   const [severity, setSeverity] = useState(urlSeverity);
   const [status,   setStatus]   = useState(urlStatus);
   const [excType,  setExcType]  = useState('');
+  const [uploadId, setUploadId] = useState(urlUploadId);
   const [excTypes, setExcTypes] = useState([]);  // dropdown options from backend
+  const [uploads,  setUploads]  = useState([]);   // available uploaded files list
 
   const PAGE_SIZE = 20;
 
-  // Fetch distinct exception types for the dropdown
+  // Fetch distinct exception types and uploads list for dropdowns
   useEffect(() => {
     exceptionsAPI.listTypes().then(r => setExcTypes(r.data || [])).catch(() => {});
+    uploadsAPI.list({ page: 1, page_size: 100 }).then(r => setUploads(r.data?.items || [])).catch(() => {});
   }, []);
 
   const load = useCallback(async () => {
@@ -360,29 +364,31 @@ export default function Exceptions() {
     try {
       const res = await exceptionsAPI.list({
         page,
-        page_size: PAGE_SIZE,
+        page_size:      PAGE_SIZE,
         search:         search   || undefined,
         severity:       severity || undefined,
         status:         status   || undefined,
         exception_type: excType  || undefined,
+        upload_id:      uploadId || undefined,
       });
       setExceptions(res.data.items || []);
       setSummary(res.data.summary  || {});
       setTotal(res.data.total      || 0);
     } catch {}
     setLoading(false);
-  }, [page, search, severity, status, excType]);
+  }, [page, search, severity, status, excType, uploadId]);
 
   useEffect(() => { load(); }, [load]);
 
-  // If URL params change (e.g. navigation from Dashboard), apply them
+  // If URL params change (e.g. navigation from Dashboard/Uploads), apply them
   useEffect(() => {
     if (urlSeverity) setSeverity(urlSeverity);
     if (urlStatus)   setStatus(urlStatus);
+    if (urlUploadId) setUploadId(urlUploadId);
   }, [location.search]);
 
   const resetFilters = () => {
-    setSearch(''); setSeverity(''); setStatus(''); setExcType(''); setPage(1);
+    setSearch(''); setSeverity(''); setStatus(''); setExcType(''); setUploadId(''); setPage(1);
   };
 
   return (
@@ -462,15 +468,51 @@ export default function Exceptions() {
             ))}
           </select>
 
+          {/* File selector dropdown */}
+          <select
+            className="form-input form-select"
+            style={{ width: 200, borderColor: uploadId ? 'var(--accent)' : undefined, fontWeight: uploadId ? 600 : 400 }}
+            value={uploadId}
+            onChange={e => { setUploadId(e.target.value); setPage(1); }}
+          >
+            <option value="">📁 All Uploaded Files</option>
+            {uploads.map((u, i) => (
+              <option key={u.id} value={u.id}>
+                📁 {u.original_filename || u.filename} (#{uploads.length - i})
+              </option>
+            ))}
+          </select>
+
           <button className="btn btn-secondary btn-icon" onClick={load} title="Refresh">
             <RefreshCw size={14} />
           </button>
-          {(search || severity || status || excType) && (
+          {(search || severity || status || excType || uploadId) && (
             <button className="btn btn-ghost btn-sm" onClick={resetFilters} title="Clear filters">
-              <XCircle size={14} /> Clear
+              Clear
             </button>
           )}
         </div>
+
+        {/* Active file isolation banner */}
+        {uploadId && (
+          <div style={{
+            background: 'rgba(59,130,246,.08)',
+            border: '1px solid rgba(59,130,246,.25)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            margin: '0 0 16px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600 }}>
+              📁 Showing exceptions for file: <u>{uploads.find(u => u.id === uploadId)?.original_filename || 'Selected File'}</u> ({total.toLocaleString()} exceptions)
+            </span>
+            <button className="btn btn-secondary btn-sm" onClick={() => setUploadId('')}>
+              Show All Files
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 48 }}><span className="spinner" /></div>
