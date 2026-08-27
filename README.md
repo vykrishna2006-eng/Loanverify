@@ -5,6 +5,27 @@
 
 ---
 
+## 🌐 Live Hosted Deployment
+
+| Component | URL | Status |
+|:---|:---|:---|
+| **🚀 Web Application (Vercel)** | Deployed on Vercel | 🟢 Live |
+| **⚡ Backend API (Render)** | https://loanverify-backend.onrender.com | 🟢 Live |
+| **📖 Interactive API Docs (Swagger UI)** | https://loanverify-backend.onrender.com/api/docs | 🟢 Live |
+| **📑 Alternative API Docs (ReDoc)** | https://loanverify-backend.onrender.com/api/redoc | 🟢 Live |
+
+---
+
+## 🔑 Demo Test Credentials (Section 12 of Challenge)
+
+| Role | Email | Password | Scope & Permissions |
+|:---|:---|:---|:---|
+| 📁 **Data Operator** | `operator@loanverify.ai` | `password123` | Ingest loan tapes, run 12 validation rules, monitor pipeline |
+| ⚖️ **Reviewer** | `reviewer@loanverify.ai` | `password123` | Exception queue, AI recommendations, human decision gate |
+| 📊 **Data Consumer** | `consumer@loanverify.ai` | `password123` | Portfolio quality scores, verified loans registry, CSV export |
+
+---
+
 ## Core Workflow
 
 ```
@@ -18,13 +39,14 @@ MESSY DATA → INGEST → NORMALIZE → VALIDATE → DETECT EXCEPTIONS
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, React Router v6, Recharts, React Dropzone |
+| Frontend | React 18, React Router v6, Recharts, React Dropzone, Lucide Icons |
 | Backend | Python 3.11+, FastAPI, SQLAlchemy 2.0, Pydantic v2 |
-| Loan Data DB | PostgreSQL 15 |
-| Auth DB | MongoDB (Atlas in production, local for dev) |
-| AI | Google Gemini (gemini-2.5-flash) / Mock provider (works without API key) |
+| Loan Data DB | PostgreSQL 15 (Neon / Render) |
+| Auth DB | MongoDB Atlas |
+| AI Copilot | Google Gemini (gemini-1.5-flash / multi-model fallback) / FinTech domain engine |
+| Integrity | SHA-256 cryptographic hashing & tamper verification |
 | Auth | JWT (python-jose), bcrypt (passlib) |
-| Deployment | Render (backend + PostgreSQL), Vercel (frontend) |
+| Deployment | Render (Backend API), Vercel (Frontend SPA) |
 
 ---
 
@@ -119,13 +141,13 @@ SECRET_KEY=your_64_char_random_secret_key
 # CORS (comma-separated)
 CORS_ORIGINS=https://your-app.vercel.app,http://localhost:3000
 
-# AI (optional — mock works without a key)
-AI_PROVIDER=mock
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+# AI (optional — domain fallback engine works automatically)
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-1.5-flash
 
 # Frontend
-REACT_APP_API_URL=https://your-backend.onrender.com
+REACT_APP_API_URL=https://loanverify-backend.onrender.com
 ```
 
 ---
