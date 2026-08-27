@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { verifiedLoansAPI } from '../api/client';
+import { verifiedLoansAPI, exportsAPI } from '../api/client';
 import { StatusBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
 import { CheckCircle, Shield, Search, XCircle, Download, Hash, ChevronDown, ChevronUp } from 'lucide-react';
@@ -271,20 +271,11 @@ export default function VerifiedLoans() {
 
   const downloadCSV = async () => {
     try {
-      const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${API}/api/exports/verified-loans/csv`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) { toast.error('Export failed'); return; }
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'verified_loans.csv';
-      a.click();
-      URL.revokeObjectURL(url);
+      await exportsAPI.downloadVerifiedLoansCSV();
       toast.success('CSV exported successfully!');
-    } catch { toast.error('Export failed'); }
+    } catch (e) {
+      toast.error('Export failed');
+    }
   };
 
   const load = async () => {

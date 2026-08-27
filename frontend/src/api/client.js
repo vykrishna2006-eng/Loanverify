@@ -141,6 +141,26 @@ export const rulesAPI = {
 
 // ── Exports ───────────────────────────────────────────
 export const exportsAPI = {
+  downloadVerifiedLoansCSV: async () => {
+    const res = await client.get('/exports/verified-loans/csv', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'verified_loans.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+  },
+  downloadAuditCSV: async (loanId) => {
+    const res = await client.get(`/exports/audit/csv${loanId ? `?loan_id=${loanId}` : ''}`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'audit_trail.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+  },
   verifiedLoansCSV: () => `${API_BASE}/api/exports/verified-loans/csv`,
   auditCSV: (loanId) => `${API_BASE}/api/exports/audit/csv${loanId ? `?loan_id=${loanId}` : ''}`,
 };

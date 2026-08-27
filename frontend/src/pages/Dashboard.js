@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { dashboardAPI, exportsAPI } from '../api/client';
 import { SeverityBadge, StatusBadge } from '../components/SeverityBadge';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Upload, AlertTriangle, CheckCircle, TrendingUp,
@@ -228,10 +229,13 @@ function ReviewerDashboard({ data, navigate }) {
 function ConsumerDashboard({ data, navigate }) {
   const m = data.metrics;
 
-  const downloadCSV = () => {
-    const url = exportsAPI.verifiedLoansCSV();
-    const a = document.createElement('a');
-    a.href = url; a.download = 'verified_loans.csv'; a.click();
+  const downloadCSV = async () => {
+    try {
+      await exportsAPI.downloadVerifiedLoansCSV();
+      toast.success('Verified loans CSV exported successfully!');
+    } catch {
+      toast.error('Failed to download verified loans CSV');
+    }
   };
 
   return (
