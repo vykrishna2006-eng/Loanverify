@@ -76,7 +76,7 @@ function OperatorDashboard({ data, navigate }) {
               <BarChart data={Object.entries(data.source_breakdown).map(([k, v]) => ({ name: k.replace('_', ' '), count: v }))}>
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, color: '#0f172a', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
                 <Bar dataKey="count" fill="var(--accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -255,20 +255,20 @@ function ConsumerDashboard({ data, navigate }) {
         <div className="card mb-4">
           <div className="card-title">Before → After Review</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 48px 1fr', gap: 16, alignItems: 'center' }}>
-            <div style={{ background: 'rgba(239,68,68,.07)', border: '1px solid rgba(239,68,68,.18)', borderRadius: 10, padding: 20 }}>
-              <div style={{ fontSize: 12, color: '#f87171', fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.04em' }}>Before</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{data.before_after.before.total_records?.toLocaleString()}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>Records</div>
-              <div style={{ fontSize: 13 }}>{(data.before_after.before.exceptions || 0).toLocaleString()} exceptions</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{data.before_after.before.exception_rate}% exception rate</div>
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: 20, boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: 12, color: '#b91c1c', fontWeight: 700, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.04em' }}>Before</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}>{data.before_after.before.total_records?.toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 500 }}>Records</div>
+              <div style={{ fontSize: 13, color: '#991b1b', fontWeight: 600 }}>{(data.before_after.before.exceptions || 0).toLocaleString()} exceptions</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>{data.before_after.before.exception_rate}% exception rate</div>
             </div>
-            <div style={{ textAlign: 'center', fontSize: 24, color: 'var(--text-muted)' }}>→</div>
-            <div style={{ background: 'rgba(16,185,129,.07)', border: '1px solid rgba(16,185,129,.18)', borderRadius: 10, padding: 20 }}>
-              <div style={{ fontSize: 12, color: '#34d399', fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.04em' }}>After Review</div>
-              <div style={{ fontSize: 28, fontWeight: 800 }}>{data.before_after.after.total_records?.toLocaleString()}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>Records</div>
-              <div style={{ fontSize: 13 }}>{(data.before_after.after.verified || 0).toLocaleString()} verified</div>
-              <div style={{ fontSize: 12, color: '#34d399', fontWeight: 600 }}>
+            <div style={{ textAlign: 'center', fontSize: 24, color: '#94a3b8', fontWeight: 700 }}>→</div>
+            <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 12, padding: 20, boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ fontSize: 12, color: '#047857', fontWeight: 700, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.04em' }}>After Review</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}>{data.before_after.after.total_records?.toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6, fontWeight: 500 }}>Records</div>
+              <div style={{ fontSize: 13, color: '#065f46', fontWeight: 600 }}>{(data.before_after.after.verified || 0).toLocaleString()} verified</div>
+              <div style={{ fontSize: 12, color: '#059669', fontWeight: 700 }}>
                 {data.before_after.after.silent_ai_changes ?? 0} Silent AI Changes
               </div>
             </div>
@@ -339,20 +339,22 @@ function ConsumerDashboard({ data, navigate }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { roleName, user } = useAuth();
+  const { roleName, user, switchRole } = useAuth();
   const [data, setData]    = useState(null);
   const [err, setErr]      = useState(false);
   const navigate           = useNavigate();
 
+  const currentRole = roleName || 'DATA_OPERATOR';
+
   useEffect(() => {
     const fn =
-      roleName === 'DATA_OPERATOR' ? dashboardAPI.operator :
-      roleName === 'REVIEWER'      ? dashboardAPI.reviewer :
+      currentRole === 'DATA_OPERATOR' ? dashboardAPI.operator :
+      currentRole === 'REVIEWER'      ? dashboardAPI.reviewer :
                                      dashboardAPI.consumer;
     fn()
       .then(r => setData(r.data))
       .catch(() => setErr(true));
-  }, [roleName]);
+  }, [currentRole]);
 
   if (!data && !err) {
     return (
@@ -378,18 +380,73 @@ export default function Dashboard() {
     DATA_OPERATOR: 'Manage uploads and track validation progress.',
     REVIEWER:      'Review exceptions, accept or reject AI recommendations.',
     DATA_CONSUMER: 'View verified loan records and data quality metrics.',
-  }[roleName] || '';
+  }[currentRole] || '';
 
   return (
     <Layout title="Dashboard">
+      {/* Interactive Role Switcher Banner */}
+      <div
+        className="card"
+        style={{
+          marginBottom: 20,
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          padding: '14px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 12,
+          boxShadow: 'var(--shadow)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+            Current Dashboard View:
+          </span>
+          <span
+            className={`badge ${
+              currentRole === 'DATA_OPERATOR' ? 'badge-blue' : currentRole === 'REVIEWER' ? 'badge-medium' : 'badge-low'
+            }`}
+            style={{ fontSize: 12, padding: '4px 10px' }}
+          >
+            {currentRole === 'DATA_OPERATOR' ? '📂 Data Operator View' : currentRole === 'REVIEWER' ? '⚖️ Reviewer View' : '📊 Data Consumer View'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Switch Role:</span>
+          {[
+            { id: 'DATA_OPERATOR', label: 'Operator', icon: '📂' },
+            { id: 'REVIEWER', label: 'Reviewer', icon: '⚖️' },
+            { id: 'DATA_CONSUMER', label: 'Consumer', icon: '📊' },
+          ].map((r) => (
+            <button
+              key={r.id}
+              onClick={() => switchRole(r.id)}
+              className="btn btn-sm"
+              style={{
+                background: currentRole === r.id ? '#2563eb' : '#f1f5f9',
+                color: currentRole === r.id ? '#ffffff' : '#334155',
+                border: currentRole === r.id ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              {r.icon} {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="page-header">
         <h2>Welcome back, {user?.full_name?.split(' ')[0]}</h2>
         <p>{subtitle}</p>
       </div>
 
-      {roleName === 'DATA_OPERATOR' && <OperatorDashboard data={data} navigate={navigate} />}
-      {roleName === 'REVIEWER'      && <ReviewerDashboard data={data} navigate={navigate} />}
-      {(roleName === 'DATA_CONSUMER' || (!roleName && data)) && <ConsumerDashboard data={data} navigate={navigate} />}
+      {currentRole === 'DATA_OPERATOR' && <OperatorDashboard data={data} navigate={navigate} />}
+      {currentRole === 'REVIEWER'      && <ReviewerDashboard data={data} navigate={navigate} />}
+      {currentRole === 'DATA_CONSUMER' && <ConsumerDashboard data={data} navigate={navigate} />}
     </Layout>
   );
 }

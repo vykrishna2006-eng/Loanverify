@@ -152,7 +152,7 @@ export default function Login() {
                   className="form-input"
                   value={roleName}
                   onChange={e => setRoleName(e.target.value)}
-                  style={{ background: '#0f172a', color: '#f8fafc' }}
+                  style={{ background: '#ffffff', color: '#0f172a' }}
                 >
                   <option value="DATA_OPERATOR">Data Operator (Upload, Ingest, Validate)</option>
                   <option value="REVIEWER">Reviewer (Exception Review & AI Copilot)</option>
@@ -199,7 +199,7 @@ export default function Login() {
           </div>
         </div>
       </div>
-      <Toaster position="top-right" toastOptions={{ style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid #334155' } }} />
+      <Toaster position="top-right" toastOptions={{ style: { background: '#ffffff', color: '#0f172a', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' } }} />
     </div>
   );
 }

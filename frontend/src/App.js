@@ -12,6 +12,7 @@ import VerifiedLoans from './pages/VerifiedLoans';
 import AuditTrail    from './pages/AuditTrail';
 import Rules         from './pages/Rules';
 import Exports       from './pages/Exports';
+import AIDevLog      from './pages/AIDevLog';
 
 function ProtectedRoute({ children, roles }) {
   const { user, roleName } = useAuth();
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/audit"         element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
       <Route path="/rules"         element={<ProtectedRoute roles={['DATA_OPERATOR','REVIEWER']}><Rules /></ProtectedRoute>} />
       <Route path="/exports"       element={<ProtectedRoute><Exports /></ProtectedRoute>} />
+      <Route path="/ai-dev-log"    element={<ProtectedRoute><AIDevLog /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

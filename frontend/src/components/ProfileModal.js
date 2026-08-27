@@ -39,7 +39,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(15, 23, 42, 0.5)',
         backdropFilter: 'blur(4px)',
         zIndex: 9999,
         display: 'flex',
@@ -54,11 +54,11 @@ export default function ProfileModal({ isOpen, onClose }) {
         style={{
           width: '100%',
           maxWidth: 500,
-          background: '#0f172a',
-          border: '1px solid #334155',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
           borderRadius: 16,
           padding: 24,
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
           position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -70,10 +70,10 @@ export default function ProfileModal({ isOpen, onClose }) {
             position: 'absolute',
             top: 18,
             right: 18,
-            background: 'rgba(255,255,255,0.06)',
+            background: '#f1f5f9',
             border: 'none',
             borderRadius: 8,
-            color: '#94a3b8',
+            color: '#64748b',
             cursor: 'pointer',
             padding: 6,
             display: 'flex',
@@ -91,51 +91,51 @@ export default function ProfileModal({ isOpen, onClose }) {
               width: 56,
               height: 56,
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
               color: '#fff',
               fontSize: 24,
-              fontWeight: 700,
+              fontWeight: 800,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
             }}
           >
             {user.full_name?.[0] || 'U'}
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f8fafc' }}>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
               {user.full_name}
             </h3>
-            <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 2 }}>{user.email}</div>
+            <div style={{ color: '#64748b', fontSize: 13, marginTop: 2, fontWeight: 500 }}>{user.email}</div>
           </div>
         </div>
 
         {/* Active Role Card */}
         <div
           style={{
-            background: 'rgba(30, 41, 59, 0.7)',
-            border: '1px solid rgba(51, 65, 85, 0.8)',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             borderRadius: 12,
             padding: 16,
             marginBottom: 16,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.06em', color: '#94a3b8' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: '#64748b' }}>
               Active Platform Role
             </span>
             <span className={`badge ${roleMeta.badgeClass}`} style={{ fontSize: 11 }}>
               {roleMeta.title}
             </span>
           </div>
-          <p style={{ fontSize: 13, color: '#cbd5e1', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+          <p style={{ fontSize: 13, color: '#334155', margin: '0 0 10px 0', lineHeight: 1.4, fontWeight: 500 }}>
             {roleMeta.desc}
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {roleMeta.permissions.map((p, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#94a3b8' }}>
-                <Check size={13} color="#10b981" />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#475569', fontWeight: 500 }}>
+                <Check size={14} color="#059669" strokeWidth={2.5} />
                 <span>{p}</span>
               </div>
             ))}
@@ -144,7 +144,7 @@ export default function ProfileModal({ isOpen, onClose }) {
 
         {/* Quick Role Switcher Buttons */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>
             Switch Role (Instant Demo)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -160,12 +160,13 @@ export default function ProfileModal({ isOpen, onClose }) {
                   padding: '8px 6px',
                   borderRadius: 8,
                   fontSize: 12,
-                  fontWeight: 600,
-                  border: currentRole === r.id ? '1px solid #3b82f6' : '1px solid #334155',
-                  background: currentRole === r.id ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.03)',
-                  color: currentRole === r.id ? '#60a5fa' : '#94a3b8',
+                  fontWeight: 700,
+                  border: currentRole === r.id ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                  background: currentRole === r.id ? '#eff6ff' : '#ffffff',
+                  color: currentRole === r.id ? '#1d4ed8' : '#475569',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  boxShadow: currentRole === r.id ? '0 1px 2px rgba(37, 99, 235, 0.1)' : 'none',
                 }}
               >
                 {r.label}
@@ -181,27 +182,29 @@ export default function ProfileModal({ isOpen, onClose }) {
             gridTemplateColumns: '1fr 1fr',
             gap: 8,
             fontSize: 11,
-            color: '#64748b',
-            background: 'rgba(15, 23, 42, 0.6)',
+            fontWeight: 600,
+            color: '#475569',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             padding: 12,
             borderRadius: 8,
             marginBottom: 20,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Database size={13} color="#3b82f6" />
+            <Database size={13} color="#2563eb" />
             <span>Auth: MongoDB</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Database size={13} color="#10b981" />
+            <Database size={13} color="#059669" />
             <span>Data: PostgreSQL</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Sparkles size={13} color="#8b5cf6" />
+            <Sparkles size={13} color="#7c3aed" />
             <span>AI: Gemini 2.5</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Shield size={13} color="#f59e0b" />
+            <Shield size={13} color="#d97706" />
             <span>Integrity: SHA-256</span>
           </div>
         </div>

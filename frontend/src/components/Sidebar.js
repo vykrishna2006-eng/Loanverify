@@ -4,19 +4,20 @@ import { useAuth } from '../context/AuthContext';
 import ProfileModal from './ProfileModal';
 import {
   LayoutDashboard, Upload, AlertTriangle, CheckCircle,
-  ClipboardList, Bot, Settings, LogOut, ShieldCheck, FileText, Download, User
+  ClipboardList, Bot, Settings, LogOut, ShieldCheck, FileText, Download, User, Sparkles
 } from 'lucide-react';
 
 const NAV = [
-  { label: 'Dashboard',      path: '/dashboard',       icon: LayoutDashboard },
-  { label: 'Uploads',        path: '/uploads',          icon: Upload, roles: ['DATA_OPERATOR'] },
-  { label: 'Loans',          path: '/loans',            icon: FileText },
-  { label: 'Exceptions',     path: '/exceptions',       icon: AlertTriangle },
-  { label: 'AI Assistant',   path: '/ai-assistant',     icon: Bot },
-  { label: 'Verified Loans', path: '/verified-loans',   icon: CheckCircle },
-  { label: 'Audit Trail',    path: '/audit',            icon: ClipboardList },
+  { label: 'Dashboard',        path: '/dashboard',       icon: LayoutDashboard },
+  { label: 'Uploads',          path: '/uploads',          icon: Upload, roles: ['DATA_OPERATOR'] },
+  { label: 'Loans',            path: '/loans',            icon: FileText },
+  { label: 'Exceptions',       path: '/exceptions',       icon: AlertTriangle },
+  { label: 'AI Assistant',     path: '/ai-assistant',     icon: Bot },
+  { label: 'Verified Loans',   path: '/verified-loans',   icon: CheckCircle },
+  { label: 'Audit Trail',      path: '/audit',            icon: ClipboardList },
   { label: 'Validation Rules', path: '/rules',          icon: ShieldCheck, roles: ['DATA_OPERATOR','REVIEWER'] },
-  { label: 'Exports',        path: '/exports',          icon: Download },
+  { label: 'Exports',          path: '/exports',          icon: Download },
+  { label: 'AI Dev Log',       path: '/ai-dev-log',       icon: Sparkles },
 ];
 
 export default function Sidebar() {
@@ -95,20 +96,20 @@ export default function Sidebar() {
                 onChange={(e) => switchRole(e.target.value)}
                 style={{
                   width: '100%',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  color: '#60a5fa',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: '#f8fafc',
+                  color: '#2563eb',
+                  border: '1px solid #cbd5e1',
                   borderRadius: 6,
-                  padding: '4px 6px',
+                  padding: '5px 8px',
                   fontSize: 11,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   outline: 'none',
                 }}
               >
-                <option value="DATA_OPERATOR" style={{ background: '#0f172a', color: '#fff' }}>Role: Data Operator</option>
-                <option value="REVIEWER" style={{ background: '#0f172a', color: '#fff' }}>Role: Reviewer</option>
-                <option value="DATA_CONSUMER" style={{ background: '#0f172a', color: '#fff' }}>Role: Data Consumer</option>
+                <option value="DATA_OPERATOR" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Data Operator</option>
+                <option value="REVIEWER" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Reviewer</option>
+                <option value="DATA_CONSUMER" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Data Consumer</option>
               </select>
             </div>
           </div>
