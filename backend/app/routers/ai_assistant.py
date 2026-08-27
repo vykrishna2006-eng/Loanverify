@@ -70,9 +70,9 @@ def get_recommendation(
             generated_note    = parsed.get("generated_note"),
             model_used        = ai_result.get("model"),
             prompt_text       = ai_result.get("prompt"),
-            raw_response      = ai_result.get("raw"),
             prompt_tokens     = ai_result.get("prompt_tokens"),
             completion_tokens = ai_result.get("completion_tokens"),
+            latency_ms        = ai_result.get("latency_ms"),
         )
         db.add(rec)
         db.commit()
