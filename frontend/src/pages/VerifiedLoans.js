@@ -4,6 +4,7 @@ import { verifiedLoansAPI } from '../api/client';
 import { StatusBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
 import { CheckCircle, Shield, Search, XCircle, Download, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Lineage Tree Component ───────────────────────────────────────────────────
 function LineageTree({ lineage }) {
@@ -259,6 +260,7 @@ function VerifiedLoanDetail({ loanId, onClose }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function VerifiedLoans() {
+  const { token } = useAuth();
   const [loans, setLoans]       = useState([]);
   const [total, setTotal]       = useState(0);
   const [loading, setLoading]   = useState(true);
@@ -266,6 +268,24 @@ export default function VerifiedLoans() {
   const [search, setSearch]     = useState('');
   const [selected, setSelected] = useState(null);
   const PAGE_SIZE = 20;
+
+  const downloadCSV = async () => {
+    try {
+      const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API}/api/exports/verified-loans/csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { toast.error('Export failed'); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'verified_loans.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('CSV exported successfully!');
+    } catch { toast.error('Export failed'); }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -299,13 +319,12 @@ export default function VerifiedLoans() {
               onChange={e => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
-          <a
-            href={`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/exports/verified-loans/csv`}
+          <button
             className="btn btn-secondary"
-            download
+            onClick={downloadCSV}
           >
             <Download size={14} /> Export All CSV
-          </a>
+          </button>
         </div>
 
         {loading ? (
