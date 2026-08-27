@@ -401,10 +401,10 @@ export default function Exceptions() {
       {/* Summary counts */}
       <div className="stat-grid mb-4" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
         {[
-          { label: 'Total', val: summary.total || 0, color: 'var(--text-primary)', filter: null },
-          { label: 'High',   val: summary.HIGH   || 0, color: 'var(--danger)',  filter: 'HIGH' },
-          { label: 'Medium', val: summary.MEDIUM || 0, color: 'var(--warning)', filter: 'MEDIUM' },
-          { label: 'Low',    val: summary.LOW    || 0, color: 'var(--success)', filter: 'LOW' },
+          { label: 'Total',  val: summary.total  || 0, color: 'var(--text-primary)', filter: null },
+          { label: 'High',   val: summary.HIGH   || 0, color: 'var(--danger)',       filter: 'HIGH' },
+          { label: 'Medium', val: summary.MEDIUM || 0, color: 'var(--warning)',      filter: 'MEDIUM' },
+          { label: 'Low',    val: summary.LOW    || 0, color: 'var(--success)',      filter: 'LOW' },
         ].map(({ label, val, color, filter }) => (
           <div
             key={label}
@@ -419,8 +419,8 @@ export default function Exceptions() {
       </div>
 
       <div className="card">
-        {/* Filter bar */}
-        <div className="filter-bar">
+        {/* Filter bar — row 1: search + severity + status + type */}
+        <div className="filter-bar" style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <div className="search-input-wrap" style={{ flex: 2, minWidth: 200 }}>
             <Search size={15} />
             <input
@@ -468,14 +468,35 @@ export default function Exceptions() {
             ))}
           </select>
 
-          {/* File selector dropdown */}
+          <button className="btn btn-secondary btn-icon" onClick={load} title="Refresh">
+            <RefreshCw size={14} />
+          </button>
+          {(search || severity || status || excType || uploadId) && (
+            <button className="btn btn-ghost btn-sm" onClick={resetFilters} title="Clear all filters">
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {/* File selector — full-width second row so it's always visible */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            📁 Filter by Uploaded File
+          </label>
           <select
             className="form-input form-select"
-            style={{ width: 200, borderColor: uploadId ? 'var(--accent)' : undefined, fontWeight: uploadId ? 600 : 400 }}
+            style={{
+              width: '100%',
+              borderColor: uploadId ? 'var(--accent)' : 'var(--border)',
+              fontWeight: uploadId ? 600 : 400,
+              color: uploadId ? 'var(--accent)' : 'var(--text-primary)',
+              background: uploadId ? 'rgba(59,130,246,.06)' : 'var(--bg-primary)',
+              fontSize: 13,
+            }}
             value={uploadId}
             onChange={e => { setUploadId(e.target.value); setPage(1); }}
           >
-            <option value="">📁 All Uploaded Files</option>
+            <option value="">📂 All Uploaded Files — Show exceptions from every file combined</option>
             {uploads.map((u, i) => (
               <option key={u.id} value={u.id}>
                 📁 {u.original_filename || u.filename} (#{uploads.length - i})
