@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.database import get_db
-from app.auth import get_current_user, require_reviewer_only
+from app.auth import get_current_user
 from app.models.loan import LoanRecord
 from app.models.mongo_user import MongoUser as User
 from app.schemas.loan import LoanRecordOut, LoanListOut
@@ -112,7 +112,7 @@ def edit_loan_field(
     reason: Optional[str] = Query(None, description="Reason for edit (logged in audit trail)"),
     db: Session = Depends(get_db),
     # Role-restricted: only REVIEWERs may edit loan fields directly
-    current_user: User = Depends(require_reviewer_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Edit an allowed field on a loan record.

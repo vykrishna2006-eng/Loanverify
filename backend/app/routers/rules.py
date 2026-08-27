@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user, require_operator
+from app.auth import get_current_user
 from app.models.validation import ValidationRule
 from app.models.mongo_user import MongoUser as User
 from app.services import audit_service
@@ -39,7 +39,7 @@ def list_rules(
 def activate_rule(
     rule_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),
+    current_user: User = Depends(get_current_user),
 ):
     rule = db.query(ValidationRule).filter(ValidationRule.rule_id == rule_id).first()
     if not rule:
@@ -57,7 +57,7 @@ def activate_rule(
 def deactivate_rule(
     rule_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),
+    current_user: User = Depends(get_current_user),
 ):
     rule = db.query(ValidationRule).filter(ValidationRule.rule_id == rule_id).first()
     if not rule:
@@ -78,7 +78,7 @@ def activate_ai_rule(
     rule_expression: str,
     severity: str = "MEDIUM",
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Human explicitly activates an AI-generated rule after reviewing it.

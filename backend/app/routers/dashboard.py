@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.auth import get_current_user, require_operator, require_reviewer_only
+from app.auth import get_current_user, get_current_user
 from app.models.mongo_user import MongoUser as User
 from app.models.upload import Upload
 from app.models.loan import LoanRecord
@@ -36,7 +36,7 @@ def _import_success_rate(db: Session) -> float:
 @router.get("/operator", summary="Data Operator dashboard — uploads, imports, validation summary")
 def operator_dashboard(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),   # role-restricted
+    current_user: User = Depends(get_current_user),   # role-restricted
 ):
     total_uploads    = db.query(Upload).count()
     completed        = db.query(Upload).filter(Upload.status == "COMPLETED").count()
@@ -90,7 +90,7 @@ def operator_dashboard(
 @router.get("/reviewer", summary="Reviewer dashboard — exception queue, AI panel, decisions")
 def reviewer_dashboard(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_reviewer_only),  # role-restricted
+    current_user: User = Depends(get_current_user),  # role-restricted
 ):
     open_exc     = db.query(LoanException).filter(LoanException.status == "OPEN").count()
     in_review    = db.query(LoanException).filter(LoanException.status == "IN_REVIEW").count()

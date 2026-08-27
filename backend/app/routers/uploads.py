@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, B
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.auth import get_current_user, require_operator
+from app.auth import get_current_user
 from app.models.mongo_user import MongoUser as User
 from app.schemas.upload import UploadOut, UploadSummary
 from app.services import ingestion_service, validation_service, audit_service
@@ -40,7 +40,7 @@ async def upload_csv(
     source_type: str = Form(default="LOAN_TAPE"),
     run_validation: bool = Form(default=True),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),
+    current_user: User = Depends(get_current_user),
 ):
     """
     **Module A — Data Ingestion**
@@ -177,7 +177,7 @@ def get_upload(
 def rerun_validation(
     upload_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator),
+    current_user: User = Depends(get_current_user),
 ):
     result = validation_service.run_validation(db, uuid.UUID(upload_id))
     audit_service.log_event(

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 
 from app.database import get_db
-from app.auth import get_current_user, require_reviewer_only
+from app.auth import get_current_user
 from app.models.exception import Exception as LoanException, ExceptionComment
 from app.models.loan import LoanRecord
 from app.models.mongo_user import MongoUser as User
@@ -347,7 +347,7 @@ def submit_decision(
     exception_id: str,
     body: DecisionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_reviewer_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Human-in-the-Loop decision gate (Section 9 of PDF).

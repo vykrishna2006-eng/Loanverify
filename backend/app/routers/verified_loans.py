@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.database import get_db
-from app.auth import get_current_user, require_reviewer_only
+from app.auth import get_current_user
 from app.models.verified_loan import VerifiedLoan
 from app.models.loan import LoanRecord
 from app.models.mongo_user import MongoUser as User
@@ -63,7 +63,7 @@ def verify_loan_manual(
     loan_id: str = Query(..., description="The loan_id string to verify"),
     reviewer_note: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_reviewer_only),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Manually create a verified record for any loan_id.
