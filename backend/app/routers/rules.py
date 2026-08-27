@@ -8,6 +8,7 @@ from app.models.validation import ValidationRule
 from app.models.mongo_user import MongoUser as User
 from app.services import audit_service
 from app.services.audit_service import AuditEventType
+from app.services.rule_seed import seed_system_rules
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ def list_rules(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    seed_system_rules(db)
     rules = db.query(ValidationRule).order_by(ValidationRule.rule_id).all()
     return [
         {

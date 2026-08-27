@@ -30,6 +30,20 @@ async def lifespan(app: FastAPI):
     # 1. Create PostgreSQL tables (loan data)
     Base.metadata.create_all(bind=engine)
 
+    # 1b. Seed built-in validation rules (init.sql is not run by create_all)
+    try:
+        from app.database import SessionLocal
+        from app.services.rule_seed import seed_system_rules
+        db = SessionLocal()
+        try:
+            n = seed_system_rules(db)
+            if n:
+                print(f"[OK] Seeded {n} built-in validation rules")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[WARN] Validation rule seed skipped: {e}")
+
     # 2. Connect to MongoDB (authentication)
     try:
         await connect_mongodb()

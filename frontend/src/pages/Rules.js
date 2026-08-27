@@ -8,11 +8,19 @@ import { Power } from 'lucide-react';
 export default function Rules() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const load = async () => {
     setLoading(true);
-    try { const r = await rulesAPI.list(); setRules(r.data); }
-    catch {} setLoading(false);
+    setError(null);
+    try {
+      const r = await rulesAPI.list();
+      setRules(Array.isArray(r.data) ? r.data : []);
+    } catch (e) {
+      setRules([]);
+      setError(e.response?.data?.detail || 'Could not load validation rules.');
+    }
+    setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
@@ -33,7 +41,13 @@ export default function Rules() {
         <p>Configurable rule engine. 15+ built-in rules. AI-generated rules require human review before activation.</p>
       </div>
       <div className="card">
-        {loading ? <div style={{ textAlign: 'center', padding: 40 }}><span className="spinner" /></div> : (
+        {loading ? <div style={{ textAlign: 'center', padding: 40 }}><span className="spinner" /></div> : error ? (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--danger)' }}>{error}</div>
+        ) : rules.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+            No validation rules found.
+          </div>
+        ) : (
           <div className="table-wrap">
             <table>
               <thead><tr>

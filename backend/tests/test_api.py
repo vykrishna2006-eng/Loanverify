@@ -191,8 +191,10 @@ class TestRulesAPI:
     def test_list_rules(self, client, operator_token):
         res = client.get("/api/rules", headers=auth_headers(operator_token))
         assert res.status_code == 200
-        # Returns a list (may be empty in test DB without seed rules)
-        assert isinstance(res.json(), list)
+        data = res.json()
+        assert isinstance(data, list)
+        assert len(data) >= 15
+        assert data[0]["rule_id"] == "R001"
 
     def test_health_check(self, client):
         res = client.get("/api/health")
