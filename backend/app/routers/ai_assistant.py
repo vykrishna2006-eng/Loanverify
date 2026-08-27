@@ -13,17 +13,71 @@ from app.services.audit_service import AuditEventType
 router = APIRouter()
 
 
+def _resolve_exception(db: Session, identifier: str):
+    from app.models.exception import Exception as LoanException
+    cleaned = identifier.strip()
+    # 1. Try exact match by exception UUID
+    exc = db.query(LoanException).filter(LoanException.id == cleaned).first()
+    if exc:
+        return exc
+    # 2. Try match by Loan ID (e.g. L001855)
+    exc = db.query(LoanException).filter(LoanException.loan_id.ilike(cleaned)).first()
+    return exc
+
+
 @router.get("/recommendation/{exception_id}", summary="Get AI recommendation for an exception")
 def get_recommendation(
     exception_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Feature 1+2: Get stored AI explanation and suggestion."""
+    """Feature 1+2: Get or generate AI explanation and suggestion by Exception UUID or Loan ID."""
     from app.models.ai import AIRecommendation
-    rec = db.query(AIRecommendation).filter(AIRecommendation.exception_id == exception_id).first()
+    from app.models.exception import Exception as LoanException
+
+    exc = _resolve_exception(db, exception_id)
+    if not exc:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No exception found for '{exception_id}'. Please enter a valid Exception UUID or Loan ID (e.g. L001855)."
+        )
+
+    rec = db.query(AIRecommendation).filter(AIRecommendation.exception_id == exc.id).first()
     if not rec:
-        raise HTTPException(status_code=404, detail="No AI recommendation found. Call /exceptions/{id}/ai-review first.")
+        # Generate on-the-fly if not generated yet!
+        exception_data = {
+            "loan_id":        exc.loan_id,
+            "exception_type": exc.exception_type,
+            "field_name":     exc.field_name,
+            "actual_value":   exc.actual_value,
+            "expected_value": exc.expected_value,
+            "message":        exc.message,
+            "severity":       exc.severity,
+            "rule_id":        exc.rule_id,
+        }
+        ai_result = ai_service.explain_exception(exception_data)
+        parsed    = ai_result.get("parsed", {})
+        sev_info  = ai_service.classify_severity(exc.exception_type, exc.field_name or "", exc.actual_value)
+
+        rec = AIRecommendation(
+            exception_id      = exc.id,
+            loan_id           = exc.loan_id,
+            explanation       = parsed.get("explanation"),
+            suggested_value   = parsed.get("suggested_value"),
+            suggested_action  = parsed.get("suggested_action", "FLAG_FOR_REVIEW"),
+            confidence_score  = parsed.get("confidence_score", 70.0),
+            severity_reason   = parsed.get("severity_reason") or sev_info.get("reason"),
+            generated_note    = parsed.get("generated_note"),
+            model_used        = ai_result.get("model"),
+            prompt_text       = ai_result.get("prompt"),
+            raw_response      = ai_result.get("raw"),
+            prompt_tokens     = ai_result.get("prompt_tokens"),
+            completion_tokens = ai_result.get("completion_tokens"),
+        )
+        db.add(rec)
+        db.commit()
+        db.refresh(rec)
+
     return rec
 
 
@@ -42,9 +96,12 @@ def compare_sources(
     from app.models.exception import Exception as LoanException
     from app.models.loan import LoanRecord
 
-    exc = db.query(LoanException).filter(LoanException.id == exception_id).first()
+    exc = _resolve_exception(db, exception_id)
     if not exc:
-        raise HTTPException(status_code=404, detail="Exception not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No exception found for '{exception_id}'. Please enter a valid Exception UUID or Loan ID."
+        )
 
     loan = db.query(LoanRecord).filter(LoanRecord.id == exc.loan_record_id).first()
 
@@ -93,11 +150,14 @@ def generate_reviewer_note(
     from app.models.exception import Exception as LoanException
     from app.models.ai import AIRecommendation
 
-    exc = db.query(LoanException).filter(LoanException.id == exception_id).first()
+    exc = _resolve_exception(db, exception_id)
     if not exc:
-        raise HTTPException(status_code=404, detail="Exception not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No exception found for '{exception_id}'. Please enter a valid Exception UUID or Loan ID."
+        )
 
-    ai_rec = db.query(AIRecommendation).filter(AIRecommendation.exception_id == exception_id).first()
+    ai_rec = db.query(AIRecommendation).filter(AIRecommendation.exception_id == exc.id).first()
 
     if ai_rec and ai_rec.generated_note:
         note = ai_rec.generated_note
@@ -113,7 +173,7 @@ def generate_reviewer_note(
         "ai_generated": True,
         "disclaimer": "This note was AI-generated. Please review and edit before saving.",
         "loan_id": exc.loan_id,
-        "exception_id": exception_id,
+        "exception_id": exc.id,
     }
 
 
@@ -126,9 +186,12 @@ def classify_severity(
     """**Feature 5 — Severity Classification**"""
     from app.models.exception import Exception as LoanException
 
-    exc = db.query(LoanException).filter(LoanException.id == exception_id).first()
+    exc = _resolve_exception(db, exception_id)
     if not exc:
-        raise HTTPException(status_code=404, detail="Exception not found")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No exception found for '{exception_id}'. Please enter a valid Exception UUID or Loan ID."
+        )
 
     result = ai_service.classify_severity(exc.exception_type, exc.field_name or "", exc.actual_value)
     return {

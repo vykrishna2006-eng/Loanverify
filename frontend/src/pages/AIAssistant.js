@@ -41,7 +41,7 @@ function FeatureCard({ icon: Icon, title, description, color = 'var(--accent)', 
 }
 
 // ── Shared exception ID input ──────────────────────────────────────────────
-function ExcInput({ value, onChange, placeholder = 'Exception ID (UUID)' }) {
+function ExcInput({ value, onChange, placeholder = 'Exception ID (UUID) or Loan ID (e.g. L001855)' }) {
   return (
     <input
       className="form-input"
