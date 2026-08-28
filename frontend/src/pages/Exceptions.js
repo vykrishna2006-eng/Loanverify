@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { exceptionsAPI, uploadsAPI } from '../api/client';
+import { exceptionsAPI } from '../api/client';
 import { SeverityBadge, StatusBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
 import {
@@ -11,15 +11,17 @@ import {
 
 // ─── Exception Detail Modal ───────────────────────────────────────────────────
 function ExceptionDetail({ id, onClose, onContinue }) {
-  const [exc, setExc]           = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [aiLoading, setAiLoad]  = useState(false);
-  const [comment, setComment]   = useState('');
-  const [decision, setDecision] = useState('');
-  const [corrected, setCorrected] = useState('');
-  const [note, setNote]         = useState('');
-  const [aiFollowed, setAiFollowed] = useState(null);
-  const [tab, setTab]           = useState('detail'); // detail | history
+  const [exc, setExc]                 = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [aiLoading, setAiLoad]        = useState(false);
+  const [comment, setComment]         = useState('');
+  const [decision, setDecision]       = useState('');
+  const [corrected, setCorrected]     = useState('');
+  const [note, setNote]               = useState('');
+  const [aiFollowed, setAiFollowed]   = useState(null);
+  const [tab, setTab]                 = useState('detail');
+  const [remaining, setRemaining]     = useState([]);
+  const [forceLoading, setForceLoad]  = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,9 +64,6 @@ function ExceptionDetail({ id, onClose, onContinue }) {
       load();
     } catch { toast.error('Failed to add comment'); }
   };
-
-  const [remaining, setRemaining]   = useState([]);
-  const [forceLoading, setForceLoad] = useState(false);
 
   const submitDecision = async () => {
     if (!decision) { toast.error('Select a decision'); return; }
