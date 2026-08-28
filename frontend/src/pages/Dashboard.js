@@ -77,7 +77,7 @@ function OperatorDashboard({ data, navigate }) {
               <BarChart data={Object.entries(data.source_breakdown).map(([k, v]) => ({ name: k.replace('_', ' '), count: v }))}>
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} />
                 <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <Tooltip contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, color: '#0f172a', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-primary)', boxShadow: 'var(--shadow-md)' }} />
                 <Bar dataKey="count" fill="var(--accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -390,8 +390,8 @@ export default function Dashboard() {
         className="card"
         style={{
           marginBottom: 20,
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
           padding: '14px 20px',
           display: 'flex',
           justifyContent: 'space-between',
@@ -402,7 +402,7 @@ export default function Dashboard() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
             Current Dashboard View:
           </span>
           <span
@@ -416,7 +416,7 @@ export default function Dashboard() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Switch Role:</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Switch Role:</span>
           {[
             { id: 'DATA_OPERATOR', label: 'Operator', icon: '📂' },
             { id: 'REVIEWER', label: 'Reviewer', icon: '⚖️' },
@@ -427,9 +427,9 @@ export default function Dashboard() {
               onClick={() => switchRole(r.id)}
               className="btn btn-sm"
               style={{
-                background: currentRole === r.id ? '#2563eb' : '#f1f5f9',
-                color: currentRole === r.id ? '#ffffff' : '#334155',
-                border: currentRole === r.id ? '1px solid #2563eb' : '1px solid #cbd5e1',
+                background: currentRole === r.id ? 'var(--accent)' : 'var(--bg-hover)',
+                color: currentRole === r.id ? '#ffffff' : 'var(--text-secondary)',
+                border: currentRole === r.id ? '1px solid var(--accent)' : '1px solid var(--border)',
                 fontWeight: 700,
                 cursor: 'pointer',
               }}

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import ProfileModal from './ProfileModal';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
-import { User, Sparkles } from 'lucide-react';
+import { User, Sun, Moon } from 'lucide-react';
 
 export default function Layout({ children, title }) {
   const { user, roleName, switchRole } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const currentRole = roleName || 'DATA_OPERATOR';
@@ -27,15 +29,48 @@ export default function Layout({ children, title }) {
             <span className="topbar-title">{title || 'LoanVerify AI'}</span>
           </div>
 
-          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Dark / Light Mode Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all 0.15s ease',
+              }}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun size={14} color="#f59e0b" />
+                  <span>Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={14} color="#6366f1" />
+                  <span>Dark</span>
+                </>
+              )}
+            </button>
+
             {/* Topbar Role Switcher Pills */}
             <div
               style={{
                 display: 'flex',
-                background: '#f1f5f9',
+                background: 'var(--bg-card)',
                 padding: '3px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 gap: '2px',
               }}
               title="Click any role to immediately switch views"
@@ -48,14 +83,14 @@ export default function Layout({ children, title }) {
                     onClick={() => switchRole(r.id)}
                     style={{
                       border: 'none',
-                      background: isActive ? '#ffffff' : 'transparent',
-                      color: isActive ? '#2563eb' : '#64748b',
+                      background: isActive ? 'var(--accent)' : 'transparent',
+                      color: isActive ? '#ffffff' : 'var(--text-secondary)',
                       fontWeight: isActive ? 700 : 500,
                       fontSize: '12px',
                       padding: '5px 12px',
                       borderRadius: '6px',
                       cursor: 'pointer',
-                      boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.2)' : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '5px',
@@ -76,12 +111,12 @@ export default function Layout({ children, title }) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
                 padding: '4px 12px 4px 6px',
                 borderRadius: '24px',
                 cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                boxShadow: 'var(--shadow-sm)',
                 transition: 'all 0.15s ease',
               }}
               title="Click to view full user profile & settings"
@@ -103,10 +138,10 @@ export default function Layout({ children, title }) {
                 {user?.full_name?.[0] || 'U'}
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                   {user?.full_name || 'My Profile'}
                 </div>
-                <div style={{ fontSize: 10, color: '#64748b', fontWeight: 500 }}>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>
                   {currentRole.replace('_', ' ')}
                 </div>
               </div>
@@ -127,10 +162,10 @@ export default function Layout({ children, title }) {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#ffffff',
-            color: '#0f172a',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.08)',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-lg)',
             fontSize: '13px',
             fontWeight: '600',
           },

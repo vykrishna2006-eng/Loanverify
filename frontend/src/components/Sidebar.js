@@ -95,9 +95,9 @@ export default function Sidebar() {
                 onChange={(e) => switchRole(e.target.value)}
                 style={{
                   width: '100%',
-                  background: '#f8fafc',
-                  color: '#2563eb',
-                  border: '1px solid #cbd5e1',
+                  background: 'var(--bg-hover)',
+                  color: 'var(--accent)',
+                  border: '1px solid var(--border)',
                   borderRadius: 6,
                   padding: '5px 8px',
                   fontSize: 11,
@@ -106,9 +106,9 @@ export default function Sidebar() {
                   outline: 'none',
                 }}
               >
-                <option value="DATA_OPERATOR" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Data Operator</option>
-                <option value="REVIEWER" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Reviewer</option>
-                <option value="DATA_CONSUMER" style={{ background: '#ffffff', color: '#0f172a' }}>Role: Data Consumer</option>
+                <option value="DATA_OPERATOR" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Role: Data Operator</option>
+                <option value="REVIEWER" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Role: Reviewer</option>
+                <option value="DATA_CONSUMER" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>Role: Data Consumer</option>
               </select>
             </div>
           </div>
