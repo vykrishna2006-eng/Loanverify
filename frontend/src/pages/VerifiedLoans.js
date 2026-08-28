@@ -3,8 +3,13 @@ import Layout from '../components/Layout';
 import { verifiedLoansAPI, exportsAPI } from '../api/client';
 import { StatusBadge } from '../components/SeverityBadge';
 import toast from 'react-hot-toast';
-import { CheckCircle, Shield, Search, XCircle, Download, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  CheckCircle, Shield, Search, XCircle, Download, Hash,
+  ChevronDown, ChevronUp, Award, BarChart2, TrendingUp,
+  MapPin, AlertTriangle, X, FileJson,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
 
 // ─── Lineage Tree Component ───────────────────────────────────────────────────
 function LineageTree({ lineage }) {
@@ -258,6 +263,291 @@ function VerifiedLoanDetail({ loanId, onClose }) {
   );
 }
 
+// ─── Certificate Modal (Feature 3) ───────────────────────────────────────────
+function CertificateModal({ loan, onClose }) {
+  if (!loan) return null;
+
+  const downloadProof = () => {
+    const proof = {
+      certificate_type:   'SHA-256 Data Integrity Certificate',
+      loan_id:            loan.loan_id,
+      hash_algorithm:     loan.hash_algorithm || 'SHA-256',
+      record_hash:        loan.record_hash,
+      is_hash_valid:      loan.is_hash_valid,
+      verified_by:        loan.verified_by_name || loan.verified_by,
+      verified_at:        loan.verified_at,
+      issued_at:          new Date().toISOString(),
+      lineage_fields:     Object.keys(loan.lineage || {}).length,
+      exception_count:    loan.exception_count,
+      canonical_snapshot: loan.canonical_data,
+      issuer:             'LoanVerify AI — Cryptographic Audit Module G',
+    };
+    const blob = new Blob([JSON.stringify(proof, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `LV_Certificate_${loan.loan_id}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Verification certificate downloaded!');
+  };
+
+  const hashValid = loan.is_hash_valid;
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 620 }}>
+        {/* Gradient header */}
+        <div style={{
+          background: hashValid
+            ? 'linear-gradient(135deg, #064e3b, #065f46)'
+            : 'linear-gradient(135deg, #7f1d1d, #991b1b)',
+          borderRadius: '10px 10px 0 0',
+          padding: '28px 28px 24px',
+          position: 'relative',
+        }}>
+          <button
+            className="btn btn-ghost btn-icon"
+            style={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.7)' }}
+            onClick={onClose}
+          >
+            <X size={18} />
+          </button>
+
+          {/* Seal */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: '3px solid rgba(255,255,255,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Award size={36} color="rgba(255,255,255,0.9)" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+                LoanVerify AI · Module G
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 4 }}>
+                Data Integrity Certificate
+              </div>
+              <div style={{ fontSize: 13, color: hashValid ? '#6ee7b7' : '#fca5a5' }}>
+                {hashValid ? '✅ CRYPTOGRAPHICALLY VERIFIED' : '⚠️ HASH MISMATCH DETECTED'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px 28px' }}>
+          {/* Loan ID + Hash */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+              Loan Record
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, fontFamily: 'monospace', marginBottom: 8 }}>
+              {loan.loan_id}
+            </div>
+
+            <div style={{ background: 'var(--bg)', borderRadius: 8, padding: '12px 16px', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                SHA-256 Record Hash
+              </div>
+              <div style={{ fontFamily: 'monospace', fontSize: 11, wordBreak: 'break-all', color: hashValid ? 'var(--success)' : 'var(--danger)', lineHeight: 1.6 }}>
+                {loan.record_hash || '—'}
+              </div>
+            </div>
+          </div>
+
+          {/* Metadata grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+            {[
+              ['Algorithm',       loan.hash_algorithm || 'SHA-256'],
+              ['Verified By',     loan.verified_by_name || (loan.verified_by || '—').slice(0, 12) + '…'],
+              ['Verified At',     loan.verified_at ? new Date(loan.verified_at).toLocaleString() : '—'],
+              ['Exceptions',      `${loan.exception_count} resolved`],
+              ['Lineage Fields',  `${Object.keys(loan.lineage || {}).length} tracked`],
+              ['Certificate No.', `LV-${(loan.loan_id || '').replace(/[^A-Z0-9]/g, '')}-${Date.now().toString(36).toUpperCase()}`],
+            ].map(([label, value]) => (
+              <div key={label} style={{ padding: '10px 12px', background: 'var(--bg)', borderRadius: 6, border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{label}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, wordBreak: 'break-all' }}>{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Issuer seal */}
+          <div style={{
+            background: 'rgba(59,130,246,0.06)',
+            border: '1px solid rgba(59,130,246,0.2)',
+            borderRadius: 8,
+            padding: '12px 16px',
+            fontSize: 11,
+            color: 'var(--text-muted)',
+            marginBottom: 20,
+            textAlign: 'center',
+          }}>
+            <Shield size={13} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+            Issued by <strong>LoanVerify AI Cryptographic Audit Module G</strong> · {new Date().toUTCString()}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <button className="btn btn-ghost" onClick={onClose}>Close</button>
+            <button className="btn btn-primary" onClick={downloadProof}>
+              <FileJson size={14} /> Download Proof (.json)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Portfolio Risk Analytics (Feature 4) ────────────────────────────────────
+function PortfolioRisk({ loans }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // Compute analytics from loans array
+  const stateCounts = {};
+  const creditCounts = {};
+  const rateBands = { '< 3%': 0, '3–4%': 0, '4–5%': 0, '5–6%': 0, '> 6%': 0 };
+  let delinquent = 0;
+
+  loans.forEach(l => {
+    const cd = l.canonical_data || {};
+    // State concentration
+    const state = cd.borrower_state || 'Unknown';
+    stateCounts[state] = (stateCounts[state] || 0) + 1;
+    // Credit grade
+    const grade = cd.credit_grade || 'Unknown';
+    creditCounts[grade] = (creditCounts[grade] || 0) + 1;
+    // Rate band
+    const rate = parseFloat(cd.interest_rate);
+    if (!isNaN(rate)) {
+      if (rate < 3) rateBands['< 3%']++;
+      else if (rate < 4) rateBands['3–4%']++;
+      else if (rate < 5) rateBands['4–5%']++;
+      else if (rate < 6) rateBands['5–6%']++;
+      else rateBands['> 6%']++;
+    }
+    if (cd.payment_status === 'DELINQUENT' || l.exception_count > 2) delinquent++;
+  });
+
+  const topStates = Object.entries(stateCounts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const topGrades = Object.entries(creditCounts).sort((a, b) => b[1] - a[1]);
+  const maxState = topStates[0]?.[1] || 1;
+  const maxGrade = topGrades[0]?.[1] || 1;
+  const maxRate  = Math.max(...Object.values(rateBands), 1);
+
+  const gradeColor = (grade) => {
+    if (grade?.startsWith('A')) return 'var(--success)';
+    if (grade?.startsWith('B')) return 'var(--accent)';
+    if (grade?.startsWith('C')) return 'var(--warning)';
+    return 'var(--danger)';
+  };
+
+  if (loans.length === 0) return null;
+
+  return (
+    <div className="card" style={{ marginBottom: 24 }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        onClick={() => setExpanded(v => !v)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BarChart2 size={18} color="var(--accent)" />
+          <div>
+            <div className="card-title" style={{ marginBottom: 0 }}>📊 Portfolio Risk & Analytics</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {loans.length} verified loans · {delinquent} high-risk · {Object.keys(stateCounts).length} states
+            </div>
+          </div>
+        </div>
+        <button className="btn btn-ghost btn-icon">
+          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+      </div>
+
+      {expanded && (
+        <div style={{ marginTop: 20 }}>
+          {/* KPI row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+            {[
+              { label: 'Total Portfolio', value: loans.length, color: 'var(--accent)' },
+              { label: 'High Risk', value: delinquent, color: 'var(--danger)' },
+              { label: 'States Covered', value: Object.keys(stateCounts).length, color: 'var(--warning)' },
+              { label: 'Grade Distribution', value: `${topGrades.length} grades`, color: 'var(--success)' },
+            ].map(kpi => (
+              <div key={kpi.label} style={{ background: 'var(--bg)', borderRadius: 8, padding: '14px 16px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{kpi.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+            {/* State Concentration */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <MapPin size={12} /> State Concentration
+              </div>
+              {topStates.map(([state, count]) => (
+                <div key={state} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+                    <span style={{ fontWeight: 600 }}>{state}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{count} ({Math.round(count / loans.length * 100)}%)</span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
+                    <div style={{ height: 6, width: `${(count / maxState) * 100}%`, background: 'var(--accent)', borderRadius: 3, transition: 'width .5s' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Credit Grade Distribution */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <TrendingUp size={12} /> Credit Grade
+              </div>
+              {topGrades.map(([grade, count]) => (
+                <div key={grade} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+                    <span style={{ fontWeight: 700, color: gradeColor(grade) }}>{grade}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{count}</span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
+                    <div style={{ height: 6, width: `${(count / maxGrade) * 100}%`, background: gradeColor(grade), borderRadius: 3, transition: 'width .5s' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Interest Rate Spread */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <BarChart2 size={12} /> Rate Spread
+              </div>
+              {Object.entries(rateBands).map(([band, count]) => (
+                <div key={band} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+                    <span>{band}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>{count}</span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--border)', borderRadius: 3 }}>
+                    <div style={{ height: 6, width: count > 0 ? `${(count / maxRate) * 100}%` : '0%', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: 3, transition: 'width .5s' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function VerifiedLoans() {
   const { token } = useAuth();
@@ -267,6 +557,7 @@ export default function VerifiedLoans() {
   const [page, setPage]         = useState(1);
   const [search, setSearch]     = useState('');
   const [selected, setSelected] = useState(null);
+  const [certLoan, setCertLoan] = useState(null);
   const PAGE_SIZE = 20;
 
   const downloadCSV = async () => {
@@ -298,6 +589,9 @@ export default function VerifiedLoans() {
         <h2>Verified Loan Records</h2>
         <p>Canonical records with SHA-256 integrity hash, data lineage, and validation summary.</p>
       </div>
+
+      {/* Portfolio Risk Analytics */}
+      <PortfolioRisk loans={loans} />
 
       <div className="card">
         <div className="filter-bar">
@@ -331,10 +625,11 @@ export default function VerifiedLoans() {
                     <th>Balance</th>
                     <th>Pay Status</th>
                     <th>Exceptions</th>
-                    <th>Verified By</th>    {/* resolved name — Task 14 */}
+                    <th>Verified By</th>
                     <th>Verified At</th>
                     <th>Hash</th>
                     <th>Integrity</th>
+                    <th>Certificate</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -354,7 +649,6 @@ export default function VerifiedLoans() {
                       <td><StatusBadge status={l.canonical_data?.payment_status || l.status} /></td>
                       <td style={{ textAlign: 'center', fontSize: 12 }}>{l.exception_count}</td>
                       <td style={{ fontSize: 12 }}>
-                        {/* Task 14: show name instead of UUID */}
                         {l.verified_by_name || <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{String(l.verified_by || '—').slice(0, 8)}…</span>}
                       </td>
                       <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
@@ -370,11 +664,21 @@ export default function VerifiedLoans() {
                           ? <CheckCircle size={14} color="var(--success)" title="Hash valid" />
                           : <XCircle    size={14} color="var(--danger)"  title="Hash invalid!" />}
                       </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ fontSize: 11, padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--accent)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 6 }}
+                          title="View cryptographic verification certificate"
+                          onClick={() => setCertLoan(l)}
+                        >
+                          <Award size={11} /> 📜 Cert
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {!loans.length && (
                     <tr>
-                      <td colSpan={9}>
+                      <td colSpan={10}>
                         <div className="empty-state">
                           <CheckCircle size={32} />
                           <h3>No verified loans yet</h3>
@@ -401,6 +705,9 @@ export default function VerifiedLoans() {
 
       {selected && (
         <VerifiedLoanDetail loanId={selected} onClose={() => { setSelected(null); load(); }} />
+      )}
+      {certLoan && (
+        <CertificateModal loan={certLoan} onClose={() => setCertLoan(null)} />
       )}
     </Layout>
   );

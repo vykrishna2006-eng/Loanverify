@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 import Layout from '../components/Layout';
 import { uploadsAPI } from '../api/client';
 import { StatusBadge } from '../components/SeverityBadge';
-import { Upload, FileText, AlertTriangle, ChevronDown, ChevronUp, Info, Trash2 } from 'lucide-react';
+import { DEMO_CSV_CONTENT } from '../data/demoTape';
+import { Upload, FileText, AlertTriangle, ChevronDown, ChevronUp, Info, Trash2, Sparkles, CheckCircle, ArrowRight } from 'lucide-react';
 
 const SOURCE_TYPES = [
   { value: 'LOAN_TAPE',         label: 'Loan Tape',          desc: 'Primary loan-level dataset' },
@@ -33,12 +34,11 @@ function UploadZone({ onUploadComplete }) {
     multiple: false,
   });
 
-  const handleUpload = async () => {
-    if (!file) return;
+  const uploadFileObject = async (fileObj) => {
     setUploading(true); setProgress(10); setResult(null); setShowFailed(false);
 
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', fileObj);
     form.append('source_type', sourceType);
     form.append('run_validation', 'true');
 
@@ -60,9 +60,40 @@ function UploadZone({ onUploadComplete }) {
     }
   };
 
+  const handleUpload = async () => {
+    if (!file) return;
+    await uploadFileObject(file);
+  };
+
+  const handleLoadDemoTape = async () => {
+    const demoBlob = new Blob([DEMO_CSV_CONTENT], { type: 'text/csv' });
+    const demoFile = new File([demoBlob], 'hackathon_demo_tape.csv', { type: 'text/csv' });
+    setFile(demoFile);
+    await uploadFileObject(demoFile);
+  };
+
   return (
     <div className="card mb-4" style={{ marginBottom: 24 }}>
-      <div className="card-title">Upload Loan Tape</div>
+      <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Upload Loan Tape</span>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          style={{
+            background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1))',
+            borderColor: 'var(--accent)',
+            color: 'var(--accent)',
+            fontWeight: 700,
+            fontSize: 12,
+          }}
+          disabled={uploading}
+          onClick={handleLoadDemoTape}
+          title="Pre-loads a realistic 20-record loan dataset with clean and exception loans for demo"
+        >
+          <Sparkles size={13} />
+          Load Demo Tape (20 Records)
+        </button>
+      </div>
 
       {/* Source type selector */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 16 }}>
