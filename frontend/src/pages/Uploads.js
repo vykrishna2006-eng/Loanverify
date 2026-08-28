@@ -248,7 +248,7 @@ export default function Uploads() {
               <table>
                 <thead>
                   <tr>
-                    <th>File</th><th>Source</th><th>Total</th><th>Imported</th><th>Failed</th><th>Status</th><th>Uploaded</th><th>Actions</th>
+                    <th>File</th><th>Source</th><th>Total</th><th>Imported</th><th>Failed</th><th>Status</th><th>Uploaded</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -271,26 +271,6 @@ export default function Uploads() {
                       <td><StatusBadge status={u.status} /></td>
                       <td style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {u.created_at ? new Date(u.created_at).toLocaleString() : '—'}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: '3px 8px' }}
-                            onClick={() => navigate(`/exceptions?upload_id=${u.id}`)}
-                            title="View exceptions isolated for this file"
-                          >
-                            ⚠️ Exceptions
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-sm"
-                            style={{ fontSize: 11, padding: '3px 8px' }}
-                            onClick={() => navigate(`/loans?upload_id=${u.id}`)}
-                            title="View loan records for this file"
-                          >
-                            📁 Loans
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}

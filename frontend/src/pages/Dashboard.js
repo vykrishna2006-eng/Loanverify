@@ -36,8 +36,8 @@ function OperatorDashboard({ data, navigate }) {
         <StatCard label="Records Imported"     value={m.total_records_imported?.toLocaleString()} icon={FileText} color="var(--success)" />
         <StatCard label="Import Success Rate"  value={`${m.import_success_rate ?? 0}%`}      icon={TrendingUp}    color="var(--success)"
           sub={`${m.completed_uploads} of ${m.total_uploads} uploads completed`} />
-        <StatCard label="Open Exceptions"      value={m.open_exceptions}                     icon={AlertTriangle} color="var(--warning)" onClick={() => navigate('/exceptions')} />
-        <StatCard label="Needs Correction"     value={m.records_needing_correction}          icon={ShieldCheck}   color="var(--danger)"  onClick={() => navigate('/exceptions')} />
+        <StatCard label="Open Exceptions"      value={m.open_exceptions}                     icon={AlertTriangle} color="var(--warning)" />
+        <StatCard label="Needs Correction"     value={m.records_needing_correction}          icon={ShieldCheck}   color="var(--danger)" />
         <StatCard label="Total Exceptions"     value={m.validation_failures}                 icon={AlertTriangle} color="var(--danger)" />
       </div>
 
@@ -50,12 +50,7 @@ function OperatorDashboard({ data, navigate }) {
               <thead><tr><th>File</th><th>Type</th><th>Rows</th><th>Imported</th><th>Failed</th><th>Status</th></tr></thead>
               <tbody>
                 {(data.recent_uploads || []).map(u => (
-                  <tr
-                    key={u.id}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/exceptions?upload_id=${u.id}`)}
-                    title="Click to view exceptions for this specific file"
-                  >
+                  <tr key={u.id}>
                     <td style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 12, fontWeight: 500, color: 'var(--accent)' }}>
                       {u.filename}
                     </td>
@@ -95,9 +90,6 @@ function OperatorDashboard({ data, navigate }) {
       <div style={{ display: 'flex', gap: 12 }}>
         <button className="btn btn-primary" onClick={() => navigate('/uploads')}>
           <Upload size={14} /> Upload CSV
-        </button>
-        <button className="btn btn-secondary" onClick={() => navigate('/exceptions')}>
-          <AlertTriangle size={14} /> Exception Queue
         </button>
         <button className="btn btn-secondary" onClick={() => navigate('/rules')}>
           <ShieldCheck size={14} /> Validation Rules

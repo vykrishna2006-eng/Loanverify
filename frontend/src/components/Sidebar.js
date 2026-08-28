@@ -10,14 +10,13 @@ import {
 const NAV = [
   { label: 'Dashboard',          path: '/dashboard',       icon: LayoutDashboard, roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
   { label: 'Uploads',            path: '/uploads',         icon: Upload,          roles: ['DATA_OPERATOR'] },
-  { label: 'Validation',         path: '/rules',           icon: ShieldCheck,     roles: ['DATA_OPERATOR', 'REVIEWER'] },
-  { label: 'Exceptions',         path: '/exceptions',      icon: AlertTriangle,   roles: ['DATA_OPERATOR', 'REVIEWER'] },
+  { label: 'Validation',         path: '/rules',           icon: ShieldCheck,     roles: ['DATA_OPERATOR'] },
+  { label: 'Exceptions',         path: '/exceptions',      icon: AlertTriangle,   roles: ['REVIEWER'] },
   { label: 'AI Assistant',       path: '/ai-assistant',    icon: Bot,             roles: ['REVIEWER'] },
   { label: 'Review / Decisions', path: '/loans',           icon: FileText,        roles: ['REVIEWER'] },
-  { label: 'Verified Loans',     path: '/verified-loans',  icon: CheckCircle,     roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
-  { label: 'Audit Trail',        path: '/audit',           icon: ClipboardList,   roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
-  { label: 'Export',             path: '/exports',         icon: Download,        roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
-  { label: 'AI Dev Log',         path: '/ai-dev-log',      icon: Sparkles },
+  { label: 'Verified Loans',     path: '/verified-loans',  icon: CheckCircle,     roles: ['REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'Audit Trail',        path: '/audit',           icon: ClipboardList,   roles: ['REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'Export',             path: '/exports',         icon: Download,        roles: ['DATA_CONSUMER'] }
 ];
 
 export default function Sidebar() {
