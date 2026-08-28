@@ -68,6 +68,7 @@ export const uploadsAPI = {
   }),
   validate: (id) => client.post(`/uploads/${id}/validate`),
   qualityScore: (id) => client.get(`/uploads/${id}/quality-score`),
+  delete: (id) => client.delete(`/uploads/${id}`),
 };
 
 // ── Loans ─────────────────────────────────────────────

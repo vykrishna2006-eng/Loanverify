@@ -198,3 +198,91 @@ def get_quality_score(
     current_user: User = Depends(get_current_user),
 ):
     return validation_service.compute_data_quality_score(db, uuid.UUID(upload_id))
+
+
+@router.delete("/{upload_id}", summary="Delete an upload and all associated records, exceptions, and decisions")
+def delete_upload(
+    upload_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.upload import Upload
+    from app.models.loan import LoanRecord
+    from app.models.exception import Exception as LoanException, ExceptionComment
+    from app.models.ai import AIRecommendation
+    from app.models.review import ReviewDecision
+    from app.models.validation import ValidationResult
+    from app.models.verified_loan import VerifiedLoan
+    from app.models.audit import AuditEvent
+
+    upload = db.query(Upload).filter(Upload.id == upload_id).first()
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload not found")
+
+    # 1. Collect loan record IDs
+    loan_records = db.query(LoanRecord.id).filter(LoanRecord.upload_id == upload_id).all()
+    loan_record_ids = [r[0] for r in loan_records]
+
+    # 2. Collect exception IDs
+    if loan_record_ids:
+        exc_records = db.query(LoanException.id).filter(
+            (LoanException.upload_id == upload_id) | (LoanException.loan_record_id.in_(loan_record_ids))
+        ).all()
+    else:
+        exc_records = db.query(LoanException.id).filter(LoanException.upload_id == upload_id).all()
+    exception_ids = [e[0] for e in exc_records]
+
+    # 3. Delete Review Decisions
+    if exception_ids:
+        db.query(ReviewDecision).filter(ReviewDecision.exception_id.in_(exception_ids)).delete(synchronize_session=False)
+
+    # 4. Delete AI Recommendations
+    if exception_ids:
+        db.query(AIRecommendation).filter(AIRecommendation.exception_id.in_(exception_ids)).delete(synchronize_session=False)
+
+    # 5. Delete Exception Comments
+    if exception_ids:
+        db.query(ExceptionComment).filter(ExceptionComment.exception_id.in_(exception_ids)).delete(synchronize_session=False)
+
+    # 6. Delete Audit Events referencing upload or exceptions
+    if exception_ids:
+        db.query(AuditEvent).filter(AuditEvent.exception_id.in_(exception_ids)).delete(synchronize_session=False)
+    db.query(AuditEvent).filter(AuditEvent.upload_id == upload_id).delete(synchronize_session=False)
+
+    # 7. Delete VerifiedLoans
+    if loan_record_ids:
+        db.query(VerifiedLoan).filter(
+            (VerifiedLoan.upload_id == upload_id) | (VerifiedLoan.loan_record_id.in_(loan_record_ids))
+        ).delete(synchronize_session=False)
+    else:
+        db.query(VerifiedLoan).filter(VerifiedLoan.upload_id == upload_id).delete(synchronize_session=False)
+
+    # 8. Delete Exceptions
+    if exception_ids:
+        db.query(LoanException).filter(LoanException.id.in_(exception_ids)).delete(synchronize_session=False)
+
+    # 9. Delete Validation Results
+    if loan_record_ids:
+        db.query(ValidationResult).filter(
+            (ValidationResult.upload_id == upload_id) | (ValidationResult.loan_record_id.in_(loan_record_ids))
+        ).delete(synchronize_session=False)
+    else:
+        db.query(ValidationResult).filter(ValidationResult.upload_id == upload_id).delete(synchronize_session=False)
+
+    # 10. Delete Loan Records
+    if loan_record_ids:
+        db.query(LoanRecord).filter(LoanRecord.id.in_(loan_record_ids)).delete(synchronize_session=False)
+
+    # 11. Delete file on disk if exists
+    if upload.file_path and os.path.exists(upload.file_path):
+        try:
+            os.remove(upload.file_path)
+        except Exception:
+            pass
+
+    # 12. Delete Upload itself
+    db.delete(upload)
+    db.commit()
+
+    return {"message": "Upload and all associated records deleted successfully", "upload_id": upload_id}
+
