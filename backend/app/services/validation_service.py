@@ -573,50 +573,18 @@ def compute_data_quality_score(db: Session, upload_id) -> Dict[str, Any]:
 
 def revalidate_loan_after_review(db: Session, loan: LoanRecord) -> list:
     """
-    After a reviewer resolves an exception, re-check this specific loan
-    against all active rules and return any still-open exceptions.
-    Used to tell the reviewer what issues remain before the loan can be verified.
+    After a reviewer resolves an exception, return ALL still-open exceptions
+    for this loan so the reviewer knows what remains before verification.
+    Simply queries the DB — no need to re-run rules since they were already
+    created during the initial validation run.
     """
-    active_ids = _get_active_rule_ids(db)
-    new_exceptions = []
+    open_exceptions = db.query(LoanException).filter(
+        LoanException.loan_record_id == str(loan.id),
+        LoanException.status.in_(["OPEN", "IN_REVIEW"]),
+    ).order_by(
+        # Show HIGH severity first, then MEDIUM, then LOW
+        LoanException.severity.desc(),
+        LoanException.created_at.asc(),
+    ).all()
 
-    # Run single-record rules
-    for rule_id, rule_fn in SINGLE_RECORD_RULE_MAP.items():
-        if rule_id not in active_ids:
-            continue
-        result = rule_fn(loan, str(loan.upload_id))
-        if result:
-            # Check if an open exception already exists for this rule on this loan
-            existing = db.query(LoanException).filter(
-                LoanException.loan_record_id == str(loan.id),
-                LoanException.rule_id == rule_id,
-                LoanException.status.in_(["OPEN", "IN_REVIEW"]),
-            ).first()
-            if existing:
-                new_exceptions.append(existing)
-            else:
-                # Create new exception for newly found issue
-                exc_dict = {
-                    "loan_record_id": str(loan.id),
-                    "upload_id":      str(loan.upload_id),
-                    "loan_id":        loan.loan_id,
-                    "rule_id":        result.rule_id,
-                    "exception_type": result.exception_type,
-                    "severity":       result.severity,
-                    "field_name":     result.field_name,
-                    "actual_value":   result.actual_value,
-                    "expected_value": result.expected_value,
-                    "message":        result.message,
-                    "status":         "OPEN",
-                }
-                db.bulk_insert_mappings(LoanException, [exc_dict])
-                db.flush()
-                new_exc = db.query(LoanException).filter(
-                    LoanException.loan_record_id == str(loan.id),
-                    LoanException.rule_id == rule_id,
-                    LoanException.status == "OPEN",
-                ).order_by(LoanException.created_at.desc()).first()
-                if new_exc:
-                    new_exceptions.append(new_exc)
-
-    return new_exceptions
+    return open_exceptions
