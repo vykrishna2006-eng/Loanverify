@@ -8,16 +8,16 @@ import {
 } from 'lucide-react';
 
 const NAV = [
-  { label: 'Dashboard',        path: '/dashboard',       icon: LayoutDashboard },
-  { label: 'Uploads',          path: '/uploads',          icon: Upload, roles: ['DATA_OPERATOR'] },
-  { label: 'Loans',            path: '/loans',            icon: FileText },
-  { label: 'Exceptions',       path: '/exceptions',       icon: AlertTriangle },
-  { label: 'AI Assistant',     path: '/ai-assistant',     icon: Bot },
-  { label: 'Verified Loans',   path: '/verified-loans',   icon: CheckCircle },
-  { label: 'Audit Trail',      path: '/audit',            icon: ClipboardList },
-  { label: 'Validation Rules', path: '/rules',          icon: ShieldCheck, roles: ['DATA_OPERATOR','REVIEWER'] },
-  { label: 'Exports',          path: '/exports',          icon: Download },
-  { label: 'AI Dev Log',       path: '/ai-dev-log',       icon: Sparkles },
+  { label: 'Dashboard',          path: '/dashboard',       icon: LayoutDashboard, roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'Uploads',            path: '/uploads',         icon: Upload,          roles: ['DATA_OPERATOR'] },
+  { label: 'Validation',         path: '/rules',           icon: ShieldCheck,     roles: ['DATA_OPERATOR', 'REVIEWER'] },
+  { label: 'Exceptions',         path: '/exceptions',      icon: AlertTriangle,   roles: ['DATA_OPERATOR', 'REVIEWER'] },
+  { label: 'AI Assistant',       path: '/ai-assistant',    icon: Bot,             roles: ['REVIEWER'] },
+  { label: 'Review / Decisions', path: '/loans',           icon: FileText,        roles: ['REVIEWER'] },
+  { label: 'Verified Loans',     path: '/verified-loans',  icon: CheckCircle,     roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'Audit Trail',        path: '/audit',           icon: ClipboardList,   roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'Export',             path: '/exports',         icon: Download,        roles: ['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER'] },
+  { label: 'AI Dev Log',         path: '/ai-dev-log',      icon: Sparkles },
 ];
 
 export default function Sidebar() {

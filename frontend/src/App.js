@@ -30,14 +30,14 @@ function AppRoutes() {
 
       <Route path="/dashboard"     element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/uploads"       element={<ProtectedRoute roles={['DATA_OPERATOR']}><Uploads /></ProtectedRoute>} />
-      <Route path="/loans"         element={<ProtectedRoute><Loans /></ProtectedRoute>} />
-      <Route path="/exceptions"    element={<ProtectedRoute><Exceptions /></ProtectedRoute>} />
-      <Route path="/exceptions/:id" element={<ProtectedRoute><Exceptions /></ProtectedRoute>} />
-      <Route path="/ai-assistant"  element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
-      <Route path="/verified-loans" element={<ProtectedRoute><VerifiedLoans /></ProtectedRoute>} />
-      <Route path="/audit"         element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
-      <Route path="/rules"         element={<ProtectedRoute roles={['DATA_OPERATOR','REVIEWER']}><Rules /></ProtectedRoute>} />
-      <Route path="/exports"       element={<ProtectedRoute><Exports /></ProtectedRoute>} />
+      <Route path="/loans"         element={<ProtectedRoute roles={['REVIEWER']}><Loans /></ProtectedRoute>} />
+      <Route path="/exceptions"    element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER']}><Exceptions /></ProtectedRoute>} />
+      <Route path="/exceptions/:id" element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER']}><Exceptions /></ProtectedRoute>} />
+      <Route path="/ai-assistant"  element={<ProtectedRoute roles={['REVIEWER']}><AIAssistant /></ProtectedRoute>} />
+      <Route path="/verified-loans" element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER']}><VerifiedLoans /></ProtectedRoute>} />
+      <Route path="/audit"         element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER']}><AuditTrail /></ProtectedRoute>} />
+      <Route path="/rules"         element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER']}><Rules /></ProtectedRoute>} />
+      <Route path="/exports"       element={<ProtectedRoute roles={['DATA_OPERATOR', 'REVIEWER', 'DATA_CONSUMER']}><Exports /></ProtectedRoute>} />
       <Route path="/ai-dev-log"    element={<ProtectedRoute><AIDevLog /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
