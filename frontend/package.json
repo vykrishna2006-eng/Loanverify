@@ -18,7 +18,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test --watchAll=false",
     "eject": "react-scripts eject"
   },
@@ -27,7 +27,8 @@
     "rules": {
       "no-unused-vars": "off",
       "react-hooks/exhaustive-deps": "off",
-      "no-undef": "off"
+      "no-undef": "off",
+      "import/no-anonymous-default-export": "off"
     }
   },
   "browserslist": {

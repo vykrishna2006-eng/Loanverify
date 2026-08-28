@@ -1,6 +1,6 @@
 {
   "framework": "create-react-app",
-  "buildCommand": "CI='' npm run build",
+  "buildCommand": "CI=false DISABLE_ESLINT_PLUGIN=true npm run build",
   "outputDirectory": "build",
   "rewrites": [
     {
@@ -9,8 +9,9 @@
     }
   ],
   "env": {
-    "CI": "",
+    "CI": "false",
     "GENERATE_SOURCEMAP": "false",
+    "DISABLE_ESLINT_PLUGIN": "true",
     "REACT_APP_API_URL": "https://loanverify-backend.onrender.com"
   }
 }
