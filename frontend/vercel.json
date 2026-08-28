@@ -9,7 +9,8 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://loanverify-backend.onrender.com",
-    "CI": "false"
+    "CI": "false",
+    "GENERATE_SOURCEMAP": "false",
+    "REACT_APP_API_URL": "https://loanverify-backend.onrender.com"
   }
 }
