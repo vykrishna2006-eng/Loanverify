@@ -360,6 +360,9 @@ def submit_decision(
     - REQUEST_CORRECTION — data needs to come from source
 
     When EDITED: corrected_value is written to the loan record and logged in the audit trail.
+    After APPROVED / REJECTED / EDITED the loan is re-validated. Remaining issues
+    (for example STALE_RECORD) are returned so the reviewer can clarify them next.
+    The loan is added to Verified Loans only when no open issues remain.
     AI is NEVER allowed to call this endpoint.
     """
     from app.models.review import ReviewDecision
@@ -464,48 +467,158 @@ def submit_decision(
         ai_metadata={"ai_followed": body.ai_decision_followed} if ai_rec else None,
     )
 
-    # ── Auto-verify when all exceptions for this loan are resolved ────────────
-    if decision_upper in ("APPROVED", "EDITED"):
-        _try_auto_verify(db, exc.loan_record_id, current_user, body.reviewer_note)
+    # ── Re-check remaining issues, then verify only when the loan is clean ──
+    remaining = []
+    verified = False
+    if decision_upper in ("APPROVED", "REJECTED", "EDITED"):
+        remaining, verified = _finish_loan_review(
+            db, exc, current_user, body.reviewer_note
+        )
 
     db.commit()
 
+    next_exc = remaining[0] if remaining else None
+    if verified:
+        message = (
+            f"Decision '{decision_upper}' recorded. "
+            f"Loan {exc.loan_id} is fully clarified and now in Verified Loans."
+        )
+    elif next_exc:
+        label = (next_exc.exception_type or "ISSUE").replace("_", " ")
+        message = (
+            f"Decision '{decision_upper}' recorded. "
+            f"Loan {exc.loan_id} still has {len(remaining)} issue(s) to clarify "
+            f"(next: {label})."
+        )
+    else:
+        message = f"Decision '{decision_upper}' recorded successfully."
+
     return {
-        "decision":         decision_upper,
-        "exception_id":     exception_id,
-        "loan_id":          exc.loan_id,
-        "reviewer":         current_user.full_name,
-        "field_updated":    field_written,
-        "corrected_value":  body.corrected_value,
-        "message":          f"Decision '{decision_upper}' recorded successfully.",
-        "verified":         decision_upper in ("APPROVED", "EDITED"),
+        "decision":              decision_upper,
+        "exception_id":          exception_id,
+        "loan_id":               exc.loan_id,
+        "reviewer":              current_user.full_name,
+        "field_updated":         field_written,
+        "corrected_value":       body.corrected_value,
+        "message":               message,
+        "verified":              verified,
+        "remaining_count":       len(remaining),
+        "next_exception_id":     str(next_exc.id) if next_exc else None,
+        "remaining_exceptions":  [_exception_brief(e) for e in remaining],
     }
 
 
-def _try_auto_verify(db, loan_record_id, verifier: User, note: str = None):
-    """Auto-create verified record when ALL exceptions for this loan are resolved."""
+def _exception_brief(e: LoanException) -> dict:
+    return {
+        "id":             str(e.id),
+        "loan_id":        e.loan_id,
+        "rule_id":        e.rule_id,
+        "exception_type": e.exception_type,
+        "severity":       e.severity,
+        "field_name":     e.field_name,
+        "actual_value":   e.actual_value,
+        "message":        e.message,
+        "status":         e.status,
+    }
+
+
+def _finish_loan_review(db, exc: LoanException, verifier: User, note: str = None):
+    """
+    After a resolving decision: re-run rules so leftover problems (stale, etc.)
+    become visible, then auto-verify only if nothing remains open.
+    """
+    from app.services.validation_service import revalidate_loan_after_review
+    from app.services.verification_service import verify_loan
+
+    loan = db.query(LoanRecord).filter(LoanRecord.id == str(exc.loan_record_id)).first()
+    remaining = []
+    if loan:
+        remaining = [
+            e for e in revalidate_loan_after_review(db, loan)
+            if str(e.id) != str(exc.id)
+        ]
+
+    if remaining:
+        return remaining, False
+
     try:
-        from app.services.verification_service import verify_loan
-
-        open_count = db.query(LoanException).filter(
-            LoanException.loan_record_id == str(loan_record_id),
-            LoanException.status.in_(["OPEN", "IN_REVIEW"]),
-        ).count()
-
-        if open_count == 0:
-            vl = verify_loan(db, str(loan_record_id), verifier, note)
-            audit_service.log_event(
-                db=db,
-                event_type=AuditEventType.VERIFIED_RECORD_CREATED,
-                actor=verifier,
-                loan_id=vl.loan_id,
-                new_value={
-                    "record_hash": vl.record_hash,
-                    "verified_at": vl.verified_at.isoformat() if vl.verified_at else None,
-                },
-            )
+        vl = verify_loan(db, str(exc.loan_record_id), verifier, note)
+        audit_service.log_event(
+            db=db,
+            event_type=AuditEventType.VERIFIED_RECORD_CREATED,
+            actor=verifier,
+            loan_id=vl.loan_id,
+            new_value={
+                "record_hash": vl.record_hash,
+                "verified_at": vl.verified_at.isoformat() if vl.verified_at else None,
+            },
+        )
+        return [], True
     except Exception as e:
         print(f"Auto-verify warning: {e}")
+        return [], False
+
+
+@router.post("/{exception_id}/force-verify", summary="Force verify loan — ignores remaining low-severity exceptions")
+def force_verify_loan(
+    exception_id: str,
+    reviewer_note: str = "Manually verified after reviewing all exceptions",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Force-create a verified record for this loan even if some LOW/MEDIUM
+    exceptions remain open. Useful for stale records and minor issues.
+    All remaining open exceptions are auto-dismissed with a note.
+    """
+    from app.services.verification_service import verify_loan
+
+    exc = db.query(LoanException).filter(LoanException.id == exception_id).first()
+    if not exc:
+        raise HTTPException(status_code=404, detail="Exception not found")
+
+    # Auto-dismiss all remaining open exceptions for this loan
+    remaining = db.query(LoanException).filter(
+        LoanException.loan_record_id == str(exc.loan_record_id),
+        LoanException.status.in_(["OPEN", "IN_REVIEW"]),
+        LoanException.id != str(exc.id),
+    ).all()
+
+    for rem in remaining:
+        rem.status      = "RESOLVED"
+        rem.resolved_at = datetime.utcnow()
+        audit_service.log_event(
+            db=db,
+            event_type=AuditEventType.LOAN_APPROVED,
+            actor=current_user,
+            loan_id=rem.loan_id,
+            exception_id=rem.id,
+            new_value={"decision": "AUTO_DISMISSED", "reason": "Force verified by reviewer"},
+            reason="Auto-dismissed during force verification",
+        )
+
+    # Also resolve the current exception
+    exc.status      = "RESOLVED"
+    exc.resolved_at = datetime.utcnow()
+
+    # Create verified record
+    vl = verify_loan(db, str(exc.loan_record_id), current_user, reviewer_note)
+    audit_service.log_event(
+        db=db,
+        event_type=AuditEventType.VERIFIED_RECORD_CREATED,
+        actor=current_user,
+        loan_id=vl.loan_id,
+        new_value={"record_hash": vl.record_hash, "force_verified": True},
+    )
+    db.commit()
+
+    return {
+        "verified":       True,
+        "loan_id":        vl.loan_id,
+        "record_hash":    vl.record_hash,
+        "dismissed_count": len(remaining),
+        "message": f"Loan {vl.loan_id} force-verified. {len(remaining)} remaining exception(s) auto-dismissed.",
+    }
 
 
 @router.post("/{exception_id}/assign", summary="Assign exception to a reviewer")

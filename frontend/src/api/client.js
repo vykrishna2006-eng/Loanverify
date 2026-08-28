@@ -91,6 +91,7 @@ export const exceptionsAPI = {
   generateAIReview: (id) => client.post(`/exceptions/${id}/ai-review`),
   submitDecision: (id, data) => client.post(`/exceptions/${id}/decision`, data),
   assign: (id, assigneeId) => client.post(`/exceptions/${id}/assign?assignee_id=${assigneeId}`),
+  forceVerify: (id, note) => client.post(`/exceptions/${id}/force-verify?reviewer_note=${encodeURIComponent(note || 'Force verified by reviewer')}`),
 };
 
 // ── AI Assistant ──────────────────────────────────────

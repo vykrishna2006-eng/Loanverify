@@ -3,7 +3,7 @@ Module B — Validation Engine
 Configurable rule engine. Each rule is a pure function returning None (pass) or ExceptionResult (fail).
 Rules respect the is_active flag from the validation_rules table.
 """
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import List, Dict, Any, Optional, Set
 from collections import Counter
@@ -461,6 +461,78 @@ def run_validation(db: Session, upload_id, active_rule_ids=None) -> Dict[str, An
     }
 
 
+_SEV_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+
+
+def _exception_from_result(result: ExceptionResult) -> LoanException:
+    return LoanException(
+        loan_record_id=str(result.loan_record_id),
+        upload_id=str(result.upload_id) if result.upload_id is not None else None,
+        loan_id=result.loan_id,
+        rule_id=result.rule_id,
+        exception_type=result.exception_type,
+        severity=result.severity,
+        field_name=result.field_name,
+        actual_value=result.actual_value,
+        expected_value=result.expected_value,
+        message=result.message,
+        status="OPEN",
+    )
+
+
+def revalidate_loan_after_review(db: Session, loan: LoanRecord) -> List[LoanException]:
+    """
+    Re-run per-record rules after a human decision so leftover issues
+    (e.g. STALE_RECORD) are surfaced instead of silently blocking verification.
+
+    - OPEN/IN_REVIEW exceptions whose rules now pass are auto-resolved
+      (typical after an EDITED correction).
+    - Failing rules with no existing exception get a new OPEN exception.
+    - Already-resolved rule_ids stay waived — they are not reopened.
+    Returns remaining OPEN/IN_REVIEW exceptions, highest severity first.
+    """
+    active_ids = _get_active_rule_ids(db)
+    failing: List[ExceptionResult] = []
+    for rule_id, rule_fn in SINGLE_RECORD_RULE_MAP.items():
+        if rule_id not in active_ids:
+            continue
+        result = rule_fn(loan, loan.upload_id)
+        if result:
+            failing.append(result)
+
+    existing: List[LoanException] = (
+        db.query(LoanException)
+        .filter(LoanException.loan_record_id == str(loan.id))
+        .all()
+    )
+    failing_ids = {f.rule_id for f in failing}
+
+    for row in existing:
+        if row.status in ("OPEN", "IN_REVIEW") and row.rule_id not in failing_ids:
+            row.status = "RESOLVED"
+            row.resolved_at = datetime.utcnow()
+
+    covered = {row.rule_id for row in existing}
+    for result in failing:
+        if result.rule_id in covered:
+            continue
+        db.add(_exception_from_result(result))
+        covered.add(result.rule_id)
+
+    db.flush()
+
+    remaining = (
+        db.query(LoanException)
+        .filter(
+            LoanException.loan_record_id == str(loan.id),
+            LoanException.status.in_(["OPEN", "IN_REVIEW"]),
+        )
+        .all()
+    )
+    remaining.sort(key=lambda e: (_SEV_ORDER.get(e.severity, 9), e.created_at or datetime.min))
+    return remaining
+
+
 def compute_data_quality_score(db: Session, upload_id) -> Dict[str, Any]:
     """Transparent Data Quality Score from validation results."""
     total = db.query(ValidationResult).filter(ValidationResult.upload_id == str(upload_id)).count()
@@ -497,3 +569,54 @@ def compute_data_quality_score(db: Session, upload_id) -> Dict[str, Any]:
             cat_scores[name] = round((cp / ct) * 100, 1)
 
     return {"overall": round((passed / total) * 100, 1), "categories": cat_scores}
+
+
+def revalidate_loan_after_review(db: Session, loan: LoanRecord) -> list:
+    """
+    After a reviewer resolves an exception, re-check this specific loan
+    against all active rules and return any still-open exceptions.
+    Used to tell the reviewer what issues remain before the loan can be verified.
+    """
+    active_ids = _get_active_rule_ids(db)
+    new_exceptions = []
+
+    # Run single-record rules
+    for rule_id, rule_fn in SINGLE_RECORD_RULE_MAP.items():
+        if rule_id not in active_ids:
+            continue
+        result = rule_fn(loan, str(loan.upload_id))
+        if result:
+            # Check if an open exception already exists for this rule on this loan
+            existing = db.query(LoanException).filter(
+                LoanException.loan_record_id == str(loan.id),
+                LoanException.rule_id == rule_id,
+                LoanException.status.in_(["OPEN", "IN_REVIEW"]),
+            ).first()
+            if existing:
+                new_exceptions.append(existing)
+            else:
+                # Create new exception for newly found issue
+                exc_dict = {
+                    "loan_record_id": str(loan.id),
+                    "upload_id":      str(loan.upload_id),
+                    "loan_id":        loan.loan_id,
+                    "rule_id":        result.rule_id,
+                    "exception_type": result.exception_type,
+                    "severity":       result.severity,
+                    "field_name":     result.field_name,
+                    "actual_value":   result.actual_value,
+                    "expected_value": result.expected_value,
+                    "message":        result.message,
+                    "status":         "OPEN",
+                }
+                db.bulk_insert_mappings(LoanException, [exc_dict])
+                db.flush()
+                new_exc = db.query(LoanException).filter(
+                    LoanException.loan_record_id == str(loan.id),
+                    LoanException.rule_id == rule_id,
+                    LoanException.status == "OPEN",
+                ).order_by(LoanException.created_at.desc()).first()
+                if new_exc:
+                    new_exceptions.append(new_exc)
+
+    return new_exceptions

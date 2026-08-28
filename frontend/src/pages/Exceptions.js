@@ -7,11 +7,10 @@ import toast from 'react-hot-toast';
 import {
   AlertTriangle, Bot, MessageSquare, CheckCircle,
   XCircle, Search, RefreshCw, ChevronRight, Clock,
-  Zap, Sliders, TrendingUp, X,
 } from 'lucide-react';
 
 // ─── Exception Detail Modal ───────────────────────────────────────────────────
-function ExceptionDetail({ id, onClose }) {
+function ExceptionDetail({ id, onClose, onContinue }) {
   const [exc, setExc]           = useState(null);
   const [loading, setLoading]   = useState(true);
   const [aiLoading, setAiLoad]  = useState(false);
@@ -32,6 +31,15 @@ function ExceptionDetail({ id, onClose }) {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setDecision('');
+    setCorrected('');
+    setNote('');
+    setAiFollowed(null);
+    setComment('');
+    setTab('detail');
+  }, [id]);
 
   const generateAI = async () => {
     setAiLoad(true);
@@ -55,6 +63,9 @@ function ExceptionDetail({ id, onClose }) {
     } catch { toast.error('Failed to add comment'); }
   };
 
+  const [remaining, setRemaining]   = useState([]);
+  const [forceLoading, setForceLoad] = useState(false);
+
   const submitDecision = async () => {
     if (!decision) { toast.error('Select a decision'); return; }
     if (decision === 'EDITED' && !corrected.trim()) { toast.error('Enter a corrected value'); return; }
@@ -65,14 +76,38 @@ function ExceptionDetail({ id, onClose }) {
         reviewer_note:   note     || null,
         ai_decision_followed: aiFollowed,
       });
-      toast.success(res.data.message || `Decision: ${decision}`);
       if (res.data.field_updated) {
         toast.success(`Field "${res.data.field_updated}" updated to ${res.data.corrected_value}`);
       }
+      if (res.data.verified) {
+        toast.success(`✅ Loan ${res.data.loan_id} is now VERIFIED — visible in Verified Loans!`);
+        setRemaining([]);
+        onClose?.();
+        return;
+      }
+      if (res.data.remaining_count > 0) {
+        setRemaining(res.data.remaining_exceptions || []);
+        toast(`⚠️ ${res.data.remaining_count} more issue(s) need review before verification`, { duration: 5000 });
+        return;
+      }
+      toast.success(res.data.message || `Decision: ${decision}`);
       onClose?.();
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Failed to submit decision');
     }
+  };
+
+  const forceVerify = async () => {
+    setForceLoad(true);
+    try {
+      const res = await exceptionsAPI.forceVerify(id, note || 'Manually verified after reviewing all exceptions');
+      toast.success(`✅ Loan ${res.data.loan_id} force-verified! ${res.data.dismissed_count} exception(s) auto-dismissed.`);
+      setRemaining([]);
+      onClose?.();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Force verify failed');
+    }
+    setForceLoad(false);
   };
 
   if (loading) {
@@ -243,6 +278,66 @@ function ExceptionDetail({ id, onClose }) {
             {e?.status === 'RESOLVED' && (
               <div className="alert alert-success">
                 This exception has been resolved. View the decision in the History tab.
+              </div>
+            )}
+
+            {/* ── Remaining exceptions panel ─────────────────── */}
+            {remaining.length > 0 && (
+              <div style={{
+                border: '1px solid rgba(245,158,11,.35)',
+                borderRadius: 10, padding: 16,
+                background: 'rgba(245,158,11,.06)',
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 10, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <AlertTriangle size={15} />
+                  {remaining.length} more issue{remaining.length !== 1 ? 's' : ''} must be clarified before this loan is verified
+                </div>
+                {remaining.map((r, i) => (
+                  <div
+                    key={r.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '8px 12px', background: 'var(--bg-hover)',
+                      borderRadius: 8, marginBottom: 6, cursor: 'pointer',
+                    }}
+                    onClick={() => onContinue?.(r.id)}
+                  >
+                    <div>
+                      <span className={`badge badge-${r.severity?.toLowerCase()}`} style={{ marginRight: 8 }}>
+                        {r.severity}
+                      </span>
+                      <span style={{ fontSize: 12, fontWeight: 500 }}>
+                        {r.exception_type?.replace(/_/g, ' ')}
+                      </span>
+                      {r.field_name && (
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>
+                          ({r.field_name}: {r.actual_value})
+                        </span>
+                      )}
+                    </div>
+                    <ChevronRight size={14} color="var(--accent)" />
+                  </div>
+                ))}
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => onContinue?.(remaining[0].id)}
+                  >
+                    <ChevronRight size={13} /> Review Next Issue
+                  </button>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={forceVerify}
+                    disabled={forceLoading}
+                    title="Dismiss remaining low/medium issues and verify the loan now"
+                  >
+                    {forceLoading ? <span className="spinner" /> : '⚡ Force Verify Now'}
+                  </button>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
+                  "Force Verify" auto-dismisses remaining issues and creates the verified record immediately.
+                </div>
               </div>
             )}
           </>}
@@ -854,7 +949,16 @@ export default function Exceptions() {
       </div>
 
       {selected && (
-        <ExceptionDetail id={selected} onClose={() => { setSelected(null); load(); }} />
+        <ExceptionDetail
+          id={selected}
+          onClose={() => { setSelected(null); load(); }}
+          onContinue={(nextId) => {
+            setSeverity('');
+            setStatus('');
+            setSelected(nextId);
+            load();
+          }}
+        />
       )}
       {showBatchModal && (
         <BatchAIModal onClose={() => { setShowBatchModal(false); load(); }} onResolved={load} />
